@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { asyncStoragePersister, queryClient } from '../lib/queryClient';
+import { SessionProvider } from '../lib/SessionProvider';
 
 export default function RootLayout() {
   return (
@@ -12,8 +13,10 @@ export default function RootLayout() {
         client={queryClient}
         persistOptions={{ persister: asyncStoragePersister }}
       >
-        <Stack screenOptions={{ headerShown: false }} />
-        <StatusBar style="auto" />
+        <SessionProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+          <StatusBar style="auto" />
+        </SessionProvider>
       </PersistQueryClientProvider>
     </SafeAreaProvider>
   );

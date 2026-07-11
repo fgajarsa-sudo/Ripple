@@ -27,7 +27,27 @@ the spec's prose and the reference Lovable prototype disagreed, and only the use
 - The cross-tenant RLS test suite (`supabase/tests/database/cross_tenant.test.sql`) gates every
   schema PR — re-run it after any migration that touches RLS. It passed 23/23 against the linked
   pilot Supabase project on 2026-07-11 (via `supabase db query --linked -f <file>`, since this
-  machine has no Docker for `supabase test db`). Phase 1 is unblocked.
+  machine has no Docker for `supabase test db`). Re-verified again after migration 002.
+
+## Phase status
+
+- **Phase 0** (foundations) and **Phase 1** (core submit loop) are code-complete: join-group
+  (invite code + directory), the full 5-step submit flow (Location → Photo → Data → Review →
+  Submitted), photo upload to storage, server-side rule-based urgency scoring
+  (`compute_rule_based_urgency()`, migration 002 — the AI half lands in Phase 2), Home, and My
+  History.
+- Verified via `npm run typecheck`, `npm test`, `expo-doctor`, and the RLS suite — **not yet
+  verified on an actual device or simulator**. Expo Go's App Store build hasn't caught up to
+  Expo SDK 57 yet (Apple review lag, not a project bug); this machine also has no
+  Docker/Android/iOS simulator. Do an end-to-end run-through on a phone once Expo Go updates
+  before trusting the UI beyond what static checks can catch.
+- Simplifications made to stay within §3's "keep dependencies minimal" rule, to revisit if the
+  product needs more later: location step uses editable text fields instead of a map picker (no
+  `react-native-maps`); date/time on a submission is captured automatically, not user-editable
+  (no date/time picker library); `sync_client_id` isn't populated yet (Phase 1 is online-only per
+  §13 — offline dedupe is genuinely Phase 4 work).
+- The Submitted screen's copy avoids claiming "reviewers were alerted" for HIGH — that's accurate
+  once Phase 2/3 wire up `send-notification` and the reviewer queue, not before.
 
 ## Repo layout
 
