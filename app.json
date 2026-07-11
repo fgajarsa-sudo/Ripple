@@ -9,13 +9,16 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "org.ripplewater.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Ripple uses the camera to photograph water conditions as part of a reading you submit.",
         "NSPhotoLibraryUsageDescription": "Lets you attach an existing photo to a water-quality reading.",
-        "NSLocationWhenInUseUsageDescription": "Ripple records your location only at the moment you submit a reading, so your conservation group knows where on the lake it was taken. Ripple never tracks your location in the background."
+        "NSLocationWhenInUseUsageDescription": "Ripple records your location only at the moment you submit a reading, so your conservation group knows where on the lake it was taken. Ripple never tracks your location in the background.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
+      "package": "org.ripplewater.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -39,7 +42,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Ripple uses the camera to photograph water conditions as part of a reading you submit."
+          "cameraPermission": "Ripple uses the camera to photograph water conditions as part of a reading you submit.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
@@ -54,6 +59,19 @@
           "icon": "./assets/icon.png"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b99b1956-1854-4179-a9be-49b150d8992f"
+      }
+    },
+    "owner": "fgajarsas-team",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b99b1956-1854-4179-a9be-49b150d8992f"
+    }
   }
 }
