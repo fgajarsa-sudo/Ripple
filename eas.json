@@ -32,7 +32,8 @@
       "ios": {
         "ascApiKeyPath": "./credentials/ios/AuthKey_WK28N3CQ4H.p8",
         "ascApiKeyIssuerId": "fb40f525-24bb-48ab-a81e-d92c295952ba",
-        "ascApiKeyId": "WK28N3CQ4H"
+        "ascApiKeyId": "WK28N3CQ4H",
+        "ascAppId": "6790010924"
       }
     }
   }
