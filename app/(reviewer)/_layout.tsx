@@ -1,20 +1,12 @@
-import { Redirect, Tabs } from 'expo-router';
-import { useEffect } from 'react';
+import { Redirect, Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 
-import { registerPushToken } from '../../lib/registerPushToken';
 import { useSession } from '../../lib/SessionProvider';
 import { useMembership } from '../../lib/useMembership';
 
-export default function MemberLayout() {
+export default function ReviewerLayout() {
   const { session, isLoading: sessionLoading } = useSession();
   const { data: membership, isLoading: membershipLoading } = useMembership();
-
-  useEffect(() => {
-    if (session?.user.id) {
-      void registerPushToken(session.user.id);
-    }
-  }, [session?.user.id]);
 
   if (sessionLoading || (session && membershipLoading)) {
     return (
@@ -29,12 +21,9 @@ export default function MemberLayout() {
   if (!membership) {
     return <Redirect href="/(auth)/join-group" />;
   }
+  if (membership.role !== 'reviewer' && membership.role !== 'admin') {
+    return <Redirect href="/(member)/home" />;
+  }
 
-  return (
-    <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: '#0f4c5c' }}>
-      <Tabs.Screen name="home" options={{ title: 'Home' }} />
-      <Tabs.Screen name="history" options={{ title: 'My History' }} />
-      <Tabs.Screen name="submit" options={{ href: null }} />
-    </Tabs>
-  );
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

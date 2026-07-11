@@ -7,9 +7,10 @@
 -- collected into a temp table (tap_output) and dumped in one final SELECT rather than
 -- relying on each assertion's own statement output.
 --
--- Last run 2026-07-11 against the linked pilot project: 23/23 passing, transaction
--- rolled back cleanly (verified zero residual rows in organizations/auth.users/
--- submissions afterward). Re-run after any RLS-relevant migration change.
+-- Last run 2026-07-11 against the linked pilot project: 25/25 passing (23 from migration
+-- 001, +2 for ai_usage_log added in migration 003), transaction rolled back cleanly
+-- (verified zero residual rows in organizations/auth.users/submissions afterward). Re-run
+-- after any RLS-relevant migration change.
 --
 -- Strategy: two orgs (A, B), one admin + one member each, seeded directly as the
 -- superuser (bypasses RLS, which is correct for test fixture setup — RLS is what we're
@@ -90,6 +91,8 @@ declare
   v_member_b uuid := gen_random_uuid();
   v_site_a uuid;
   v_site_b uuid;
+  v_submission_a uuid;
+  v_submission_b uuid;
 begin
   insert into organizations (name, slug, waterbody_name)
   values ('Org A Conservation', 'org-a', 'Lake A') returning id into v_org_a;
@@ -112,9 +115,16 @@ begin
   insert into sites (org_id, name, lat, lng) values (v_org_a, 'Site A', 43.73, -71.56) returning id into v_site_a;
   insert into sites (org_id, name, lat, lng) values (v_org_b, 'Site B', 44.00, -71.00) returning id into v_site_b;
 
-  insert into submissions (org_id, user_id, site_id, lat, lng, captured_at, readings) values
-    (v_org_a, v_member_a, v_site_a, 43.73, -71.56, now(), '{"ph": 7.2}'::jsonb),
-    (v_org_b, v_member_b, v_site_b, 44.00, -71.00, now(), '{"ph": 7.1}'::jsonb);
+  insert into submissions (org_id, user_id, site_id, lat, lng, captured_at, readings)
+    values (v_org_a, v_member_a, v_site_a, 43.73, -71.56, now(), '{"ph": 7.2}'::jsonb)
+    returning id into v_submission_a;
+  insert into submissions (org_id, user_id, site_id, lat, lng, captured_at, readings)
+    values (v_org_b, v_member_b, v_site_b, 44.00, -71.00, now(), '{"ph": 7.1}'::jsonb)
+    returning id into v_submission_b;
+
+  insert into ai_usage_log (submission_id, org_id, input_tokens, output_tokens) values
+    (v_submission_a, v_org_a, 100, 50),
+    (v_submission_b, v_org_b, 100, 50);
 
   insert into notifications (org_id, sent_by, title, body, target) values
     (v_org_a, v_admin_a, 'Alert A', 'Body A', 'all'),
@@ -133,7 +143,8 @@ begin
   -- stash ids for later blocks via a temp table (do blocks can't return values)
   create temporary table test_fixture_ids as
   select v_org_a as org_a, v_org_b as org_b, v_admin_a as admin_a, v_member_a as member_a,
-         v_admin_b as admin_b, v_member_b as member_b, v_site_a as site_a, v_site_b as site_b;
+         v_admin_b as admin_b, v_member_b as member_b, v_site_a as site_a, v_site_b as site_b,
+         v_submission_a as submission_a, v_submission_b as submission_b;
   -- created by the setup role; later blocks read it as `authenticated` via tests.authenticate_as()
   grant select on test_fixture_ids to authenticated;
 end $$;
@@ -264,6 +275,18 @@ insert into tap_output (line) select isnt_empty(
 insert into tap_output (line) select is_empty(
   format('select 1 from org_invites where org_id = %L', (select org_b from test_fixture_ids)),
   'org A admin cannot see org B invites'
+);
+
+-- ----------------------------------------------------------------------------
+-- ai_usage_log
+-- ----------------------------------------------------------------------------
+insert into tap_output (line) select isnt_empty(
+  format('select 1 from ai_usage_log where org_id = %L', (select org_a from test_fixture_ids)),
+  'org A admin sees org A ai_usage_log rows'
+);
+insert into tap_output (line) select is_empty(
+  format('select 1 from ai_usage_log where org_id = %L', (select org_b from test_fixture_ids)),
+  'org A admin cannot see org B ai_usage_log rows'
 );
 
 -- ----------------------------------------------------------------------------
