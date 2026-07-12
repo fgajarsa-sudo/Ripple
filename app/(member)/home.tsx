@@ -3,6 +3,9 @@ import { router } from 'expo-router';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppHeader } from '../../components/AppHeader';
+import { PillButton } from '../../components/ui';
+import { colors, fonts, radius } from '../../lib/theme';
 import { clearPushToken } from '../../lib/registerPushToken';
 import { useSession } from '../../lib/SessionProvider';
 import { supabase } from '../../lib/supabase';
@@ -36,81 +39,80 @@ export default function Home() {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.orgName}>{membership?.organizations?.name ?? 'Ripple'}</Text>
-            {membership?.organizations?.waterbody_name && (
-              <Text style={styles.waterbody}>{membership.organizations.waterbody_name}</Text>
-            )}
-          </View>
+    <View style={styles.root}>
+      <AppHeader
+        right={
           <Pressable onPress={onSignOut}>
             <Text style={styles.signOutLink}>Sign out</Text>
           </Pressable>
+        }
+      />
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <View style={styles.orgBlock}>
+          <Text style={styles.orgName}>{membership?.organizations?.name ?? 'Ripple'}</Text>
+          {membership?.organizations?.waterbody_name && (
+            <Text style={styles.waterbody}>{membership.organizations.waterbody_name}</Text>
+          )}
         </View>
-      </View>
 
-      <Pressable
-        style={styles.submitButton}
-        onPress={() => router.push('/(member)/submit/location')}
-      >
-        <Text style={styles.submitButtonText}>Submit a Reading</Text>
-      </Pressable>
+        <PillButton title="Submit a Reading" onPress={() => router.push('/(member)/submit/location')} />
 
-      {(membership?.role === 'admin' || membership?.role === 'reviewer') && (
-        <Pressable style={styles.reviewButton} onPress={() => router.push('/(reviewer)/queue')}>
-          <Text style={styles.reviewButtonText}>Review queue</Text>
-        </Pressable>
-      )}
-
-      <Text style={styles.sectionTitle}>GROUP ALERTS</Text>
-      <FlatList
-        data={notifications}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.alertsList}
-        ListEmptyComponent={<Text style={styles.emptyText}>No alerts yet</Text>}
-        renderItem={({ item }) => (
-          <View style={styles.alertCard}>
-            <Text style={styles.alertTitle}>{item.title}</Text>
-            <Text style={styles.alertBody}>{item.body}</Text>
-            <Text style={styles.alertDate}>{new Date(item.sent_at).toLocaleDateString()}</Text>
+        {(membership?.role === 'admin' || membership?.role === 'reviewer') && (
+          <View style={styles.reviewButtonSpacing}>
+            <PillButton
+              title="Review queue"
+              variant="secondary"
+              onPress={() => router.push('/(reviewer)/queue')}
+            />
           </View>
         )}
-      />
-    </SafeAreaView>
+
+        <Text style={styles.sectionTitle}>GROUP ALERTS</Text>
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.alertsList}
+          ListEmptyComponent={<Text style={styles.emptyText}>No alerts yet</Text>}
+          renderItem={({ item }) => (
+            <View style={styles.alertCard}>
+              <Text style={styles.alertTitle}>{item.title}</Text>
+              <Text style={styles.alertBody}>{item.body}</Text>
+              <Text style={styles.alertDate}>{new Date(item.sent_at).toLocaleDateString()}</Text>
+            </View>
+          )}
+        />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 24 },
-  header: { marginTop: 12, marginBottom: 20 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  orgName: { fontSize: 26, fontWeight: '700', color: '#0f4c5c' },
-  waterbody: { fontSize: 15, color: '#4a5a5f', marginTop: 2 },
-  signOutLink: { fontSize: 14, color: '#4a5a5f', marginTop: 6 },
-  submitButton: {
-    backgroundColor: '#0f4c5c',
-    borderRadius: 12,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginBottom: 24,
+  root: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, padding: 24 },
+  orgBlock: { marginTop: 8, marginBottom: 20 },
+  orgName: { fontFamily: fonts.display, fontSize: 24, color: colors.navy },
+  waterbody: { fontSize: 15, color: colors.mutedForeground, marginTop: 2, fontFamily: fonts.body },
+  signOutLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
+  reviewButtonSpacing: { marginTop: 12 },
+  sectionTitle: {
+    fontSize: 11,
+    fontFamily: fonts.bodySemiBold,
+    color: colors.mutedForeground,
+    letterSpacing: 1,
+    marginTop: 24,
+    marginBottom: 8,
   },
-  submitButtonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
-  reviewButton: {
-    borderWidth: 1,
-    borderColor: '#0f4c5c',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  reviewButtonText: { color: '#0f4c5c', fontSize: 15, fontWeight: '600' },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#4a5a5f', letterSpacing: 0.5, marginBottom: 8 },
   alertsList: { gap: 10, paddingBottom: 24 },
-  alertCard: { borderWidth: 1, borderColor: '#e5eaea', borderRadius: 12, padding: 14, gap: 4 },
-  alertTitle: { fontSize: 15, fontWeight: '600', color: '#0f2a30' },
-  alertBody: { fontSize: 14, color: '#4a5a5f' },
-  alertDate: { fontSize: 12, color: '#8a9a9d' },
-  emptyText: { textAlign: 'center', color: '#8a9a9d', marginTop: 24 },
+  alertCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: 14,
+    gap: 4,
+    backgroundColor: colors.card,
+  },
+  alertTitle: { fontSize: 15, fontFamily: fonts.bodySemiBold, color: colors.foreground },
+  alertBody: { fontSize: 14, color: colors.mutedForeground, fontFamily: fonts.body },
+  alertDate: { fontSize: 12, color: colors.mutedForeground, fontFamily: fonts.body },
+  emptyText: { textAlign: 'center', color: colors.mutedForeground, marginTop: 24, fontFamily: fonts.body },
 });

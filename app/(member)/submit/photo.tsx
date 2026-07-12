@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenTitle } from '../../../components/ui';
+import { colors, fonts, radius } from '../../../lib/theme';
 import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
 
 export default function PhotoStep() {
@@ -30,7 +32,7 @@ export default function PhotoStep() {
   if (draft.photoUri) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Capture the water</Text>
+        <ScreenTitle>Capture the water</ScreenTitle>
         <Image source={{ uri: draft.photoUri }} style={styles.preview} />
         <View style={styles.previewActions}>
           <Pressable style={styles.retakeButton} onPress={() => updateDraft({ photoUri: null })}>
@@ -51,7 +53,7 @@ export default function PhotoStep() {
   if (!permission.granted) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.title}>Capture the water</Text>
+        <ScreenTitle>Capture the water</ScreenTitle>
         <Text style={styles.hint}>A photo helps our AI assess visible conditions.</Text>
         <Pressable style={styles.permissionButton} onPress={requestPermission}>
           <Text style={styles.nextButtonText}>Allow camera access</Text>
@@ -65,7 +67,7 @@ export default function PhotoStep() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Capture the water</Text>
+      <ScreenTitle>Capture the water</ScreenTitle>
       <Text style={styles.hint}>Lake surface, top-down works best</Text>
       <View style={styles.cameraWrapper}>
         <CameraView ref={cameraRef} style={styles.camera} facing="back" />
@@ -84,12 +86,11 @@ export default function PhotoStep() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 24, gap: 12 },
-  title: { fontSize: 24, fontWeight: '700', color: '#0f4c5c' },
-  hint: { fontSize: 14, color: '#4a5a5f' },
-  cameraWrapper: { flex: 1, borderRadius: 16, overflow: 'hidden', backgroundColor: '#000' },
+  container: { flex: 1, backgroundColor: colors.cream, padding: 24, gap: 12 },
+  hint: { fontSize: 14, color: colors.mutedForeground, fontFamily: fonts.body },
+  cameraWrapper: { flex: 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: '#000' },
   camera: { flex: 1 },
-  preview: { flex: 1, borderRadius: 16 },
+  preview: { flex: 1, borderRadius: radius.md },
   previewActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -101,28 +102,33 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     borderWidth: 4,
-    borderColor: '#0f4c5c',
+    borderColor: colors.teal,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
   },
-  captureButtonInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#0f4c5c' },
+  captureButtonInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.teal },
   retakeButton: {
     borderWidth: 1,
-    borderColor: '#0f4c5c',
-    borderRadius: 12,
+    borderColor: colors.teal,
+    borderRadius: radius.pill,
     paddingVertical: 14,
     paddingHorizontal: 24,
   },
-  retakeButtonText: { color: '#0f4c5c', fontSize: 16, fontWeight: '600' },
-  nextButton: { backgroundColor: '#0f4c5c', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 32 },
-  nextButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  retakeButtonText: { color: colors.teal, fontSize: 16, fontFamily: fonts.bodySemiBold },
+  nextButton: {
+    backgroundColor: colors.teal,
+    borderRadius: radius.pill,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+  },
+  nextButtonText: { color: colors.tealForeground, fontSize: 16, fontFamily: fonts.bodySemiBold },
   permissionButton: {
-    backgroundColor: '#0f4c5c',
-    borderRadius: 12,
+    backgroundColor: colors.teal,
+    borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
   skipButton: { paddingVertical: 14, paddingHorizontal: 8 },
-  skipButtonText: { color: '#4a5a5f', fontSize: 15 },
+  skipButtonText: { color: colors.mutedForeground, fontSize: 15, fontFamily: fonts.body },
 });

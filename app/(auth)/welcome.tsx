@@ -2,11 +2,15 @@ import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Logo } from '../../components/Logo';
+import { colors, fonts, radius } from '../../lib/theme';
+
 export default function Welcome() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.brand}>
-        <Text style={styles.title}>Ripple</Text>
+        <Logo size={64} />
+        <Text style={styles.title}>ripple</Text>
         <Text style={styles.subtitle}>Citizen-science water-quality monitoring</Text>
       </View>
 
@@ -25,7 +29,7 @@ export default function Welcome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cream,
     justifyContent: 'space-between',
     padding: 24,
   },
@@ -33,16 +37,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 12,
   },
   title: {
+    fontFamily: fonts.display,
     fontSize: 40,
-    fontWeight: '700',
-    color: '#0f4c5c',
+    color: colors.navy,
+    marginTop: 8,
   },
   subtitle: {
-    marginTop: 8,
+    fontFamily: fonts.body,
     fontSize: 16,
-    color: '#4a5a5f',
+    color: colors.mutedForeground,
     textAlign: 'center',
   },
   actions: {
@@ -50,25 +56,30 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   button: {
-    borderRadius: 12,
+    borderRadius: radius.pill,
     paddingVertical: 16,
     alignItems: 'center',
   },
   primaryButton: {
-    backgroundColor: '#0f4c5c',
+    backgroundColor: colors.teal,
+    shadowColor: colors.teal,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: colors.tealForeground,
+    fontFamily: fonts.bodySemiBold,
     fontSize: 16,
-    fontWeight: '600',
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: '#0f4c5c',
+    borderColor: colors.teal,
   },
   secondaryButtonText: {
-    color: '#0f4c5c',
+    color: colors.teal,
+    fontFamily: fonts.bodySemiBold,
     fontSize: 16,
-    fontWeight: '600',
   },
 });

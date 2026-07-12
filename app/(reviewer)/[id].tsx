@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { colors, fonts, radius } from '../../lib/theme';
 import { SENSOR_PARAMETERS, type SensorParameterKey } from '../../lib/readings';
 import { useSession } from '../../lib/SessionProvider';
 import { supabase } from '../../lib/supabase';
@@ -113,7 +114,7 @@ export default function SubmissionDetail() {
   if (isLoading || !submission) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={{ marginTop: 40 }} />
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.teal} />
       </SafeAreaView>
     );
   }
@@ -214,35 +215,38 @@ export default function SubmissionDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.cream },
   content: { padding: 24, gap: 16 },
-  backLink: { fontSize: 14, color: '#0f4c5c', marginBottom: 4 },
-  title: { fontSize: 20, fontWeight: '700', color: '#0f2a30' },
-  meta: { fontSize: 13, color: '#4a5a5f' },
-  photo: { width: '100%', height: 200, borderRadius: 12 },
-  section: { gap: 6, borderTopWidth: 1, borderTopColor: '#e5eaea', paddingTop: 12 },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#4a5a5f', letterSpacing: 0.5 },
-  sectionBody: { fontSize: 15, color: '#0f2a30' },
+  backLink: { fontSize: 14, color: colors.teal, marginBottom: 4, fontFamily: fonts.body },
+  title: { fontSize: 20, fontFamily: fonts.display, color: colors.navy },
+  meta: { fontSize: 13, color: colors.mutedForeground, fontFamily: fonts.body },
+  photo: { width: '100%', height: 200, borderRadius: radius.md },
+  section: { gap: 6, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },
+  sectionTitle: { fontSize: 12, fontFamily: fonts.bodySemiBold, color: colors.mutedForeground, letterSpacing: 0.5 },
+  sectionBody: { fontSize: 15, color: colors.foreground, fontFamily: fonts.body },
   readingRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  readingLabel: { fontSize: 15, color: '#0f2a30' },
-  readingValue: { fontSize: 15, color: '#4a5a5f' },
-  readingHigh: { color: '#b3261e', fontWeight: '700' },
-  readingMedium: { color: '#9a6b00', fontWeight: '600' },
+  readingLabel: { fontSize: 15, color: colors.foreground, fontFamily: fonts.body },
+  readingValue: { fontSize: 15, color: colors.mutedForeground, fontFamily: fonts.body },
+  readingHigh: { color: colors.destructive, fontFamily: fonts.bodySemiBold },
+  readingMedium: { color: colors.warnForeground, fontFamily: fonts.bodySemiBold },
   noteInput: {
     borderWidth: 1,
-    borderColor: '#c9d3d4',
-    borderRadius: 10,
+    borderColor: colors.border,
+    borderRadius: radius.md,
     padding: 12,
     fontSize: 15,
+    fontFamily: fonts.body,
+    color: colors.foreground,
+    backgroundColor: colors.card,
     minHeight: 70,
     textAlignVertical: 'top',
   },
   actionRow: { flexDirection: 'row', gap: 8, padding: 24 },
-  actionButton: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  rejectButton: { borderWidth: 1, borderColor: '#b3261e' },
-  rejectButtonText: { color: '#b3261e', fontWeight: '600' },
-  noteButton: { borderWidth: 1, borderColor: '#4a5a5f' },
-  noteButtonText: { color: '#4a5a5f', fontWeight: '600' },
-  validateButton: { backgroundColor: '#0f4c5c' },
-  validateButtonText: { color: '#fff', fontWeight: '600' },
+  actionButton: { flex: 1, borderRadius: radius.pill, paddingVertical: 14, alignItems: 'center' },
+  rejectButton: { borderWidth: 1, borderColor: colors.destructive },
+  rejectButtonText: { color: colors.destructive, fontFamily: fonts.bodySemiBold },
+  noteButton: { borderWidth: 1, borderColor: colors.mutedForeground },
+  noteButtonText: { color: colors.mutedForeground, fontFamily: fonts.bodySemiBold },
+  validateButton: { backgroundColor: colors.teal },
+  validateButtonText: { color: colors.tealForeground, fontFamily: fonts.bodySemiBold },
 });

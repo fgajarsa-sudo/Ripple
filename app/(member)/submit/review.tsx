@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ErrorText, PillButton, ScreenTitle } from '../../../components/ui';
+import { colors, fonts, radius } from '../../../lib/theme';
 import { SENSOR_PARAMETERS } from '../../../lib/readings';
 import { useSession } from '../../../lib/SessionProvider';
 import { submitReading } from '../../../lib/submitReading';
@@ -38,7 +40,7 @@ export default function ReviewStep() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Review & submit</Text>
+        <ScreenTitle>Review & submit</ScreenTitle>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -91,40 +93,27 @@ export default function ReviewStep() {
           )}
         </View>
 
-        {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
       </ScrollView>
 
-      <Pressable style={styles.submitButton} onPress={onSubmit} disabled={isSubmitting}>
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitButtonText}>Submit Reading</Text>
-        )}
-      </Pressable>
+      <View style={styles.submitButtonWrap}>
+        <PillButton title="Submit Reading" onPress={onSubmit} loading={isSubmitting} />
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.cream },
   content: { padding: 24, gap: 20 },
-  title: { fontSize: 24, fontWeight: '700', color: '#0f4c5c' },
-  section: { gap: 6, borderBottomWidth: 1, borderBottomColor: '#e5eaea', paddingBottom: 16 },
+  section: { gap: 6, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 16 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#4a5a5f', letterSpacing: 0.5 },
-  editLink: { fontSize: 13, color: '#0f4c5c', fontWeight: '600' },
-  sectionBody: { fontSize: 15, color: '#0f2a30' },
-  photoPreview: { width: '100%', height: 160, borderRadius: 12, marginTop: 4 },
+  sectionTitle: { fontSize: 12, fontFamily: fonts.bodySemiBold, color: colors.mutedForeground, letterSpacing: 0.5 },
+  editLink: { fontSize: 13, color: colors.teal, fontFamily: fonts.bodySemiBold },
+  sectionBody: { fontSize: 15, color: colors.foreground, fontFamily: fonts.body },
+  photoPreview: { width: '100%', height: 160, borderRadius: radius.md, marginTop: 4 },
   readingRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  readingLabel: { fontSize: 15, color: '#0f2a30' },
-  readingValue: { fontSize: 15, color: '#4a5a5f' },
-  errorText: { color: '#b3261e', fontSize: 14, textAlign: 'center' },
-  submitButton: {
-    backgroundColor: '#0f4c5c',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    margin: 24,
-  },
-  submitButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  readingLabel: { fontSize: 15, color: colors.foreground, fontFamily: fonts.body },
+  readingValue: { fontSize: 15, color: colors.mutedForeground, fontFamily: fonts.body },
+  submitButtonWrap: { margin: 24 },
 });

@@ -1,16 +1,10 @@
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ErrorText, Input, PillButton, ScreenTitle } from '../../components/ui';
+import { colors, fonts, radius } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 
 type PublicOrg = {
@@ -86,7 +80,7 @@ export default function JoinGroup() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Join a group</Text>
+        <ScreenTitle>Join a group</ScreenTitle>
         <Pressable onPress={() => supabase.auth.signOut().then(() => router.replace('/(auth)/welcome'))}>
           <Text style={styles.signOutLink}>Sign out</Text>
         </Pressable>
@@ -113,28 +107,16 @@ export default function JoinGroup() {
 
       {mode === 'code' ? (
         <View style={styles.section}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter invite code"
-            autoCapitalize="characters"
-            onChangeText={setCode}
-            value={code}
-          />
+          <Input placeholder="Enter invite code" autoCapitalize="characters" onChangeText={setCode} value={code} />
           {/* QR scanning (expo-camera barcode scanner) lands alongside the Phase 1 submit
               flow's camera integration, not here. */}
-          {errorMessage && <Text style={styles.formError}>{errorMessage}</Text>}
-          <Pressable style={styles.button} onPress={onRedeemCode} disabled={isSubmitting}>
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Join</Text>
-            )}
-          </Pressable>
+          {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
+          <PillButton title="Join" onPress={onRedeemCode} loading={isSubmitting} />
         </View>
       ) : (
         <View style={styles.section}>
           {isLoadingDirectory ? (
-            <ActivityIndicator />
+            <ActivityIndicator color={colors.teal} />
           ) : (
             <FlatList
               data={orgs}
@@ -157,7 +139,7 @@ export default function JoinGroup() {
               )}
             />
           )}
-          {errorMessage && <Text style={styles.formError}>{errorMessage}</Text>}
+          {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
         </View>
       )}
     </SafeAreaView>
@@ -165,7 +147,7 @@ export default function JoinGroup() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 24 },
+  container: { flex: 1, backgroundColor: colors.cream, padding: 24 },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -173,27 +155,22 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 16,
   },
-  title: { fontSize: 28, fontWeight: '700', color: '#0f4c5c' },
-  signOutLink: { fontSize: 14, color: '#4a5a5f' },
+  signOutLink: { fontSize: 14, color: colors.mutedForeground, fontFamily: fonts.body },
   tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   tab: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#c9d3d4',
+    borderColor: colors.border,
   },
-  tabActive: { backgroundColor: '#0f4c5c', borderColor: '#0f4c5c' },
-  tabText: { color: '#0f4c5c', fontWeight: '600' },
-  tabTextActive: { color: '#fff' },
+  tabActive: { backgroundColor: colors.teal, borderColor: colors.teal },
+  tabText: { color: colors.teal, fontFamily: fonts.bodySemiBold },
+  tabTextActive: { color: colors.tealForeground },
   section: { flex: 1, gap: 12 },
-  input: { borderWidth: 1, borderColor: '#c9d3d4', borderRadius: 10, padding: 14, fontSize: 16 },
-  formError: { color: '#b3261e', fontSize: 14, textAlign: 'center' },
-  button: { backgroundColor: '#0f4c5c', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  orgRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#e5eaea' },
-  orgName: { fontSize: 16, fontWeight: '600', color: '#0f2a30' },
-  orgMeta: { fontSize: 13, color: '#4a5a5f', marginTop: 2 },
-  emptyText: { textAlign: 'center', color: '#4a5a5f', marginTop: 24 },
+  orgRow: { paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
+  orgName: { fontSize: 16, fontFamily: fonts.bodySemiBold, color: colors.foreground },
+  orgMeta: { fontSize: 13, color: colors.mutedForeground, marginTop: 2, fontFamily: fonts.body },
+  emptyText: { textAlign: 'center', color: colors.mutedForeground, marginTop: 24, fontFamily: fonts.body },
 });

@@ -1,9 +1,11 @@
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
+import { ErrorText, Input, PillButton, ScreenTitle } from '../../components/ui';
+import { colors, fonts } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 
 const schema = z.object({
@@ -36,49 +38,33 @@ export default function SignIn() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Sign in</Text>
+      <ScreenTitle>Sign in</ScreenTitle>
 
-      <TextInput
-        style={styles.input}
+      <Input
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
         onChangeText={setEmail}
         value={email}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        onChangeText={setPassword}
-        value={password}
-      />
+      <Input placeholder="Password" secureTextEntry onChangeText={setPassword} value={password} />
 
-      {errorMessage && <Text style={styles.formError}>{errorMessage}</Text>}
+      {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
 
-      <Pressable style={styles.button} onPress={onSubmit} disabled={isSubmitting}>
-        {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign in</Text>}
-      </Pressable>
+      <View style={styles.buttonSpacing}>
+        <PillButton title="Sign in" onPress={onSubmit} loading={isSubmitting} />
+      </View>
 
       <Link href="/(auth)/sign-up" style={styles.link}>
-        <Text>Don&apos;t have an account? Create one</Text>
+        <Text style={styles.linkText}>Don&apos;t have an account? Create one</Text>
       </Link>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', padding: 24, justifyContent: 'center', gap: 12 },
-  title: { fontSize: 28, fontWeight: '700', color: '#0f4c5c', marginBottom: 12 },
-  input: { borderWidth: 1, borderColor: '#c9d3d4', borderRadius: 10, padding: 14, fontSize: 16 },
-  formError: { color: '#b3261e', fontSize: 14, textAlign: 'center' },
-  button: {
-    backgroundColor: '#0f4c5c',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  container: { flex: 1, backgroundColor: colors.cream, padding: 24, justifyContent: 'center', gap: 12 },
+  buttonSpacing: { marginTop: 8 },
   link: { marginTop: 16, alignSelf: 'center' },
+  linkText: { fontFamily: fonts.body, color: colors.mutedForeground },
 });

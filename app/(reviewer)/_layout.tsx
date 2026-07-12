@@ -2,6 +2,7 @@ import { Redirect, Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 
 import { useSession } from '../../lib/SessionProvider';
+import { colors } from '../../lib/theme';
 import { useMembership } from '../../lib/useMembership';
 
 export default function ReviewerLayout() {
@@ -10,8 +11,8 @@ export default function ReviewerLayout() {
 
   if (sessionLoading || (session && membershipLoading)) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cream }}>
+        <ActivityIndicator color={colors.teal} />
       </View>
     );
   }

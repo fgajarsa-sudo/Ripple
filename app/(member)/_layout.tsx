@@ -1,9 +1,11 @@
 import { Redirect, Tabs } from 'expo-router';
+import { History, House } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { registerPushToken } from '../../lib/registerPushToken';
 import { useSession } from '../../lib/SessionProvider';
+import { colors, fonts } from '../../lib/theme';
 import { useMembership } from '../../lib/useMembership';
 
 export default function MemberLayout() {
@@ -18,8 +20,8 @@ export default function MemberLayout() {
 
   if (sessionLoading || (session && membershipLoading)) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cream }}>
+        <ActivityIndicator color={colors.teal} />
       </View>
     );
   }
@@ -31,9 +33,23 @@ export default function MemberLayout() {
   }
 
   return (
-    <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: '#0f4c5c' }}>
-      <Tabs.Screen name="home" options={{ title: 'Home' }} />
-      <Tabs.Screen name="history" options={{ title: 'My History' }} />
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.teal,
+        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarLabelStyle: { fontFamily: fonts.body, fontSize: 11 },
+        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
+      }}
+    >
+      <Tabs.Screen
+        name="home"
+        options={{ title: 'Home', tabBarIcon: ({ color, size }) => <House color={color} size={size} /> }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{ title: 'My History', tabBarIcon: ({ color, size }) => <History color={color} size={size} /> }}
+      />
       <Tabs.Screen name="submit" options={{ href: null }} />
     </Tabs>
   );

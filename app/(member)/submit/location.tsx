@@ -2,17 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Input, PillButton, ScreenTitle } from '../../../components/ui';
+import { colors, fonts, radius } from '../../../lib/theme';
 import { distanceMeters } from '../../../lib/geo';
 import { supabase } from '../../../lib/supabase';
 import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
@@ -89,10 +83,10 @@ export default function LocationStep() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Where are you?</Text>
+        <ScreenTitle>Where are you?</ScreenTitle>
 
         {locating ? (
-          <ActivityIndicator style={styles.locatingIndicator} />
+          <ActivityIndicator style={styles.locatingIndicator} color={colors.teal} />
         ) : (
           <View style={styles.locationCard}>
             <Text style={styles.locationLabel}>
@@ -100,14 +94,14 @@ export default function LocationStep() {
             </Text>
             {locationError && <Text style={styles.warning}>{locationError}</Text>}
             <View style={styles.coordRow}>
-              <TextInput
+              <Input
                 style={styles.coordInput}
                 placeholder="Latitude"
                 keyboardType="numbers-and-punctuation"
                 value={draft.lat !== null ? String(draft.lat) : ''}
                 onChangeText={(t) => updateDraft({ lat: t ? Number(t) : null, siteId: null, siteName: null })}
               />
-              <TextInput
+              <Input
                 style={styles.coordInput}
                 placeholder="Longitude"
                 keyboardType="numbers-and-punctuation"
@@ -163,66 +157,52 @@ export default function LocationStep() {
         </View>
       </ScrollView>
 
-      <Pressable
-        style={[styles.nextButton, !canProceed && styles.nextButtonDisabled]}
-        disabled={!canProceed}
-        onPress={() => router.push('/(member)/submit/photo')}
-      >
-        <Text style={styles.nextButtonText}>Next</Text>
-      </Pressable>
+      <View style={styles.nextButtonWrap}>
+        <PillButton title="Next" onPress={() => router.push('/(member)/submit/photo')} disabled={!canProceed} />
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.cream },
   content: { padding: 24, gap: 16 },
-  title: { fontSize: 24, fontWeight: '700', color: '#0f4c5c' },
   locatingIndicator: { marginTop: 24 },
   locationCard: { gap: 10 },
-  locationLabel: { fontSize: 12, fontWeight: '700', color: '#4a5a5f', letterSpacing: 0.5 },
-  warning: { color: '#b3261e', fontSize: 13 },
+  locationLabel: { fontSize: 12, fontFamily: fonts.bodySemiBold, color: colors.mutedForeground, letterSpacing: 0.5 },
+  warning: { color: colors.destructive, fontSize: 13, fontFamily: fonts.body },
   coordRow: { flexDirection: 'row', gap: 10 },
-  coordInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#c9d3d4',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 15,
-  },
-  siteMatch: { fontSize: 15, color: '#0f4c5c', fontWeight: '600' },
+  coordInput: { flex: 1 },
+  siteMatch: { fontSize: 15, color: colors.teal, fontFamily: fonts.bodySemiBold },
   siteList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   siteChip: {
     borderWidth: 1,
-    borderColor: '#c9d3d4',
-    borderRadius: 20,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
     paddingVertical: 6,
     paddingHorizontal: 14,
   },
-  siteChipActive: { backgroundColor: '#0f4c5c', borderColor: '#0f4c5c' },
-  siteChipText: { color: '#0f4c5c', fontSize: 13 },
-  siteChipTextActive: { color: '#fff' },
-  sectionLabel: { fontSize: 12, fontWeight: '700', color: '#4a5a5f', letterSpacing: 0.5, marginTop: 8 },
-  dateText: { fontSize: 15, color: '#0f2a30' },
+  siteChipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
+  siteChipText: { color: colors.teal, fontSize: 13, fontFamily: fonts.body },
+  siteChipTextActive: { color: colors.tealForeground },
+  sectionLabel: {
+    fontSize: 12,
+    fontFamily: fonts.bodySemiBold,
+    color: colors.mutedForeground,
+    letterSpacing: 0.5,
+    marginTop: 8,
+  },
+  dateText: { fontSize: 15, color: colors.foreground, fontFamily: fonts.body },
   weatherRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   weatherChip: {
     borderWidth: 1,
-    borderColor: '#c9d3d4',
-    borderRadius: 20,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-  weatherChipActive: { backgroundColor: '#0f4c5c', borderColor: '#0f4c5c' },
-  weatherChipText: { color: '#0f4c5c', fontSize: 14 },
-  weatherChipTextActive: { color: '#fff' },
-  nextButton: {
-    backgroundColor: '#0f4c5c',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    margin: 24,
-  },
-  nextButtonDisabled: { opacity: 0.4 },
-  nextButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  weatherChipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
+  weatherChipText: { color: colors.teal, fontSize: 14, fontFamily: fonts.body },
+  weatherChipTextActive: { color: colors.tealForeground },
+  nextButtonWrap: { margin: 24 },
 });
