@@ -1,5 +1,6 @@
 import { Fraunces_600SemiBold, useFonts as useFrauncesFonts } from '@expo-google-fonts/fraunces';
 import { Inter_400Regular, Inter_600SemiBold, useFonts as useInterFonts } from '@expo-google-fonts/inter';
+import * as Sentry from '@sentry/react-native';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -7,10 +8,11 @@ import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { asyncStoragePersister, queryClient } from '../lib/queryClient';
+import '../lib/sentry';
 import { SessionProvider } from '../lib/SessionProvider';
 import { colors } from '../lib/theme';
 
-export default function RootLayout() {
+function RootLayout() {
   const [interLoaded] = useInterFonts({ Inter_400Regular, Inter_600SemiBold });
   const [frauncesLoaded] = useFrauncesFonts({ Fraunces_600SemiBold });
 
@@ -36,3 +38,5 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

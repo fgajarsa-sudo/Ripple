@@ -120,9 +120,30 @@ the spec's prose and the reference Lovable prototype disagreed, and only the use
   - Site auto-matching and membership lookup needed no new work for offline caching — see the
     Phase 4 note above, same reasoning applies here (nothing account-deletion-specific to
     revisit).
-- Not yet built: Phase 5 item 4 (the separate Ripple platform web dashboard) and Phase 6 items
-  not already done ahead of schedule (Sentry crash reporting, EAS Update OTA channel, a
-  volunteer install guide) — TestFlight/APK distribution itself is already live, see above.
+- **Phase 6 item: Sentry crash reporting is wired in.** `@sentry/react-native` (installed via
+  `npx expo install`, which auto-added the `@sentry/react-native` config plugin to `app.json`)
+  is initialized in `lib/sentry.ts` — `Sentry.init({ dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  sendDefaultPii: false, ... })`, imported for its side effect at the top of
+  `app/_layout.tsx`, whose default export is wrapped in `Sentry.wrap()` for an automatic error
+  boundary + native crash capture. `sendDefaultPii` is explicitly off — some pilot orgs'
+  volunteers are minors (age-gated at signup, migration 001), so Sentry gets crash/error
+  context only, no automatic device/user PII collection. The DSN lives in
+  `EXPO_PUBLIC_SENTRY_DSN` (`.env` locally, `eas env:create` for production/preview/development
+  — same pattern as the Supabase URL/anon key) since a DSN is safe to embed client-side, unlike
+  a real secret.
+  What this gets you now: JS-level error/crash reporting. What's deliberately deferred: fully
+  symbolicated native crash stack traces, which need a Sentry auth token for source-map/debug-
+  symbol upload during EAS builds (the `@sentry/react-native/expo` plugin's build-hook side) —
+  the plugin is installed but org/project/auth-token aren't configured in `app.json` yet, so
+  that upload step is currently a no-op rather than a build failure. Add
+  `organization`/`project` to the plugin config + `SENTRY_AUTH_TOKEN` as an EAS secret to turn
+  it on. Not yet verified against a real crash on a real device — that needs the next
+  TestFlight/APK build in testers' hands.
+- Not yet built: Phase 5 item 4 (the separate Ripple platform web dashboard) and the remaining
+  Phase 6 items (EAS Update OTA channel — `runtimeVersion`/`updates.url` are already present in
+  `app.json` from `eas init`, but no update has actually been published to the `pilot` channel
+  yet; a volunteer install guide; an external TestFlight tester group for actual SLA
+  volunteers, as opposed to the internal team-only group in use now).
 
 ## Repo layout
 
