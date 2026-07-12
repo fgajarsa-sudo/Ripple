@@ -62,7 +62,7 @@ export default function JoinGroup() {
     }
     setErrorMessage(null);
     setIsSubmitting(true);
-    const { error } = await redeemInvite(code.trim());
+    const { error } = await redeemInvite(code.trim().toUpperCase());
     setIsSubmitting(false);
     if (error) {
       setErrorMessage(error.message);
