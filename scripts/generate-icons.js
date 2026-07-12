@@ -29,8 +29,15 @@ function svg(inner, size = 1024) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${inner}</svg>`;
 }
 
-async function render(svgString, outPath, size = 1024) {
-  await sharp(Buffer.from(svgString)).resize(size, size).png().toFile(outPath);
+async function render(svgString, outPath, size = 1024, { flattenBackground } = {}) {
+  let pipeline = sharp(Buffer.from(svgString)).resize(size, size);
+  if (flattenBackground) {
+    // App Store review (not just TestFlight processing) rejects icons with an alpha
+    // channel, even fully-opaque ones — .flatten() strips it, unlike a solid background
+    // rect alone, which still leaves the PNG's alpha channel present structurally.
+    pipeline = pipeline.flatten({ background: flattenBackground });
+  }
+  await pipeline.png().toFile(outPath);
   console.log('wrote', outPath);
 }
 
@@ -44,7 +51,9 @@ async function main() {
       <circle cx="512" cy="512" r="400" fill="${TEAL}" />
       ${wavesGroup({ scale: 20, stroke: CREAM })}
     `),
-    path.join(assets, 'icon.png')
+    path.join(assets, 'icon.png'),
+    1024,
+    { flattenBackground: NAVY }
   );
 
   // Android adaptive icon background: solid navy, full bleed (launcher applies its own mask).
