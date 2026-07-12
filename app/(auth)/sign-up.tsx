@@ -4,6 +4,7 @@ import { StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
+import { Logo } from '../../components/Logo';
 import { ErrorText, Input, PillButton, ScreenTitle } from '../../components/ui';
 import { colors, fonts } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
@@ -73,6 +74,10 @@ export default function SignUp() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.brand}>
+        <Logo size={40} />
+      </View>
+
       <ScreenTitle>Create account</ScreenTitle>
 
       <Input placeholder="Display name" onChangeText={setDisplayName} value={displayName} />
@@ -111,6 +116,7 @@ export default function SignUp() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream, padding: 24, justifyContent: 'center', gap: 12 },
+  brand: { alignItems: 'center', marginBottom: 4 },
   attestationRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
   attestationText: { fontSize: 15, flexShrink: 1, fontFamily: fonts.body, color: colors.foreground },
   legalText: { fontSize: 13, color: colors.mutedForeground, fontFamily: fonts.body },

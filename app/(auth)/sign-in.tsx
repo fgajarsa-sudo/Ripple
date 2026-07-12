@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
+import { Logo } from '../../components/Logo';
 import { ErrorText, Input, PillButton, ScreenTitle } from '../../components/ui';
 import { colors, fonts } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
@@ -38,6 +39,11 @@ export default function SignIn() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.brand}>
+        <Logo size={48} />
+        <Text style={styles.tagline}>One reading. One ripple.</Text>
+      </View>
+
       <ScreenTitle>Sign in</ScreenTitle>
 
       <Input
@@ -64,6 +70,8 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream, padding: 24, justifyContent: 'center', gap: 12 },
+  brand: { alignItems: 'center', gap: 10, marginBottom: 16 },
+  tagline: { fontFamily: fonts.display, fontSize: 17, color: colors.navy, textAlign: 'center' },
   buttonSpacing: { marginTop: 8 },
   link: { marginTop: 16, alignSelf: 'center' },
   linkText: { fontFamily: fonts.body, color: colors.mutedForeground },
