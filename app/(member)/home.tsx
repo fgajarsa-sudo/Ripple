@@ -57,9 +57,14 @@ export default function Home() {
     <View style={styles.root}>
       <AppHeader
         right={
-          <Pressable onPress={onSignOut}>
-            <Text style={styles.signOutLink}>Sign out</Text>
-          </Pressable>
+          <>
+            <Pressable onPress={() => router.push('/(member)/settings')}>
+              <Text style={styles.signOutLink}>Settings</Text>
+            </Pressable>
+            <Pressable onPress={onSignOut}>
+              <Text style={styles.signOutLink}>Sign out</Text>
+            </Pressable>
+          </>
         }
       />
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>

@@ -60,6 +60,7 @@ export default function MemberLayout() {
         options={{ title: 'My History', tabBarIcon: ({ color, size }) => <History color={color} size={size} /> }}
       />
       <Tabs.Screen name="submit" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

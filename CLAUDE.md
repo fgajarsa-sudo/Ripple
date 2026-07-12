@@ -90,8 +90,39 @@ the spec's prose and the reference Lovable prototype disagreed, and only the use
   Not yet tested on a real device in airplane mode — the queue/sync logic is typechecked and
   unit-testable pieces are covered, but true offline behavior (kill connectivity mid-session,
   submit, restore connectivity, confirm auto-sync) needs a live device pass.
-- Not yet built: Phase 5 (account deletion, my-data export, the
-  separate Ripple platform web dashboard).
+- **Phase 5 items 1-3 (account deletion, my-data export, nightly aggregate refresh) are
+  code-complete and deployed.** `app/(member)/settings.tsx` (reachable via a "Settings" link in
+  Home's header) has two actions:
+  - **Export my data** — entirely client-side, no Edge Function: RLS already scopes
+    `submissions` to `user_id = auth.uid()`, so this just queries directly and builds a CSV the
+    same way `app/(admin)/export.tsx` does for the org-wide version, then shares it via
+    `expo-file-system` + `expo-sharing`.
+  - **Delete my account** — one confirm `Alert`, then `delete-account` Edge Function
+    (JWT-verified, same pattern as `send-notification`/`export-org-data`): resolves the caller
+    from their own JWT, then a service-role client calls `auth.admin.deleteUser()`. `profiles`
+    cascades from that (`on delete cascade`, migration 001) — all PII (display_name,
+    expo_push_token) lives there, so deleting it is the whole job.
+  - Migration 007 is what makes that cascade safe: `submissions.user_id`/`reviewed_by`,
+    `notifications.sent_by`, and `org_invites.created_by` were changed from their default
+    `NO ACTION`/`CASCADE` behavior to `ON DELETE SET NULL` (nullable where they weren't
+    already), so the org keeps its submissions/notifications/invites — just with the departed
+    user's attribution nulled out ("former member"), per spec §13 Phase 5. Real gotcha found
+    while building this: Postgres fires row-level triggers for FK-cascaded `SET NULL` updates
+    too, so the `submissions_update_columns_guard` trigger (migration 001, locks every column
+    except the review/AI ones) was rejecting the cascade's own update and aborting the whole
+    account deletion. Fixed by carving out exactly the `user_id → NULL` transition in that
+    trigger, without opening a path to reassigning a submission to a different user. Verified
+    end-to-end against the real linked database with a throwaway org/user/submission before
+    trusting it (see git history for the one-off SQL — not kept as a permanent fixture).
+  - Migration 007 also enables `pg_cron` and schedules `refresh-agg-daily-site-readings`
+    (`agg_daily_site_readings_mv`, `REFRESH ... CONCURRENTLY` using the unique index migration
+    001 already put on the matview) nightly at 03:17 UTC.
+  - Site auto-matching and membership lookup needed no new work for offline caching — see the
+    Phase 4 note above, same reasoning applies here (nothing account-deletion-specific to
+    revisit).
+- Not yet built: Phase 5 item 4 (the separate Ripple platform web dashboard) and Phase 6 items
+  not already done ahead of schedule (Sentry crash reporting, EAS Update OTA channel, a
+  volunteer install guide) — TestFlight/APK distribution itself is already live, see above.
 
 ## Repo layout
 
