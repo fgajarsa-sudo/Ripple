@@ -17,9 +17,10 @@ const URGENCY_MESSAGE: Record<string, string> = {
 };
 
 export default function SubmittedStep() {
-  const { urgency } = useLocalSearchParams<{ urgency?: string }>();
+  const { urgency, queued } = useLocalSearchParams<{ urgency?: string; queued?: string }>();
   const { resetDraft } = useSubmitDraft();
   const validUrgency = urgency === 'low' || urgency === 'medium' || urgency === 'high' ? urgency : null;
+  const isQueued = queued === '1';
 
   useEffect(() => {
     // clear the draft now that it's been submitted, so a fresh Submit starts empty
@@ -33,15 +34,17 @@ export default function SubmittedStep() {
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.content}>
           <RippleCelebration />
-          <Text style={styles.checkmark}>✓</Text>
-          <Text style={styles.title}>Reading submitted</Text>
+          <Text style={styles.checkmark}>{isQueued ? '⏳' : '✓'}</Text>
+          <Text style={styles.title}>{isQueued ? 'Reading queued' : 'Reading submitted'}</Text>
           <Text style={styles.tagline}>Every reading makes a difference.</Text>
 
-          {validUrgency && <UrgencyBadge urgency={validUrgency} />}
+          {!isQueued && validUrgency && <UrgencyBadge urgency={validUrgency} />}
           <Text style={styles.message}>
-            {validUrgency
-              ? URGENCY_MESSAGE[validUrgency]
-              : "Thanks for your submission — your reading has been added to the group's records."}
+            {isQueued
+              ? "Queued — will upload when you're back in coverage. You can keep submitting readings offline."
+              : validUrgency
+                ? URGENCY_MESSAGE[validUrgency]
+                : "Thanks for your submission — your reading has been added to the group's records."}
           </Text>
         </View>
 

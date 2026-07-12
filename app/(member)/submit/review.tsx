@@ -6,9 +6,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '../../../components/AppHeader';
 import { ErrorText, PillButton, ScreenTitle } from '../../../components/ui';
 import { colors, fonts, radius } from '../../../lib/theme';
+import { enqueueSubmission, listQueuedSubmissions } from '../../../lib/offlineQueue';
 import { SENSOR_PARAMETERS } from '../../../lib/readings';
 import { useSession } from '../../../lib/SessionProvider';
-import { submitReading } from '../../../lib/submitReading';
+import { supabase } from '../../../lib/supabase';
+import { runSync } from '../../../lib/syncEngine';
 import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
 import { useMembership } from '../../../lib/useMembership';
 
@@ -26,11 +28,28 @@ export default function ReviewStep() {
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
-      const result = await submitReading(draft, membership.org_id, session.user.id);
-      router.replace({
-        pathname: '/(member)/submit/submitted',
-        params: { urgency: result.ai_urgency ?? '' },
-      });
+      // Always queues locally first, then attempts an immediate sync — offline-first per
+      // spec §10, but with no perceptible difference from a direct submit when online,
+      // since runSync() resolves before we check whether the item is still queued.
+      const syncClientId = await enqueueSubmission(draft, membership.org_id, session.user.id);
+      await runSync(session.user.id);
+
+      const stillQueued = await listQueuedSubmissions(session.user.id);
+      const wasSynced = !stillQueued.some((item) => item.syncClientId === syncClientId);
+
+      if (wasSynced) {
+        const { data } = await supabase
+          .from('submissions')
+          .select('ai_urgency')
+          .eq('sync_client_id', syncClientId)
+          .maybeSingle();
+        router.replace({
+          pathname: '/(member)/submit/submitted',
+          params: { urgency: data?.ai_urgency ?? '', queued: '' },
+        });
+      } else {
+        router.replace({ pathname: '/(member)/submit/submitted', params: { queued: '1' } });
+      }
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

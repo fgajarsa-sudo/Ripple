@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../components/AppHeader';
 import { PillButton } from '../../components/ui';
+import { countQueuedSubmissions } from '../../lib/offlineQueue';
 import { colors, fonts, radius } from '../../lib/theme';
 import { clearPushToken } from '../../lib/registerPushToken';
 import { useSession } from '../../lib/SessionProvider';
@@ -38,6 +40,19 @@ export default function Home() {
     enabled: !!membership?.org_id,
   });
 
+  const { data: queuedCount, refetch: refetchQueuedCount } = useQuery({
+    queryKey: ['queued-count', session?.user.id],
+    queryFn: () => countQueuedSubmissions(session!.user.id),
+    enabled: !!session?.user.id,
+    refetchInterval: 4000,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      void refetchQueuedCount();
+    }, [refetchQueuedCount])
+  );
+
   return (
     <View style={styles.root}>
       <AppHeader
@@ -54,6 +69,14 @@ export default function Home() {
             <Text style={styles.waterbody}>{membership.organizations.waterbody_name}</Text>
           )}
         </View>
+
+        {!!queuedCount && (
+          <View style={styles.queuedChip}>
+            <Text style={styles.queuedChipText}>
+              ⏳ {queuedCount} reading{queuedCount === 1 ? '' : 's'} queued — will upload when back in coverage
+            </Text>
+          </View>
+        )}
 
         <PillButton title="Submit a Reading" onPress={() => router.push('/(member)/submit/location')} />
 
@@ -99,6 +122,13 @@ const styles = StyleSheet.create({
   orgName: { fontFamily: fonts.display, fontSize: 24, color: colors.navy },
   waterbody: { fontSize: 15, color: colors.mutedForeground, marginTop: 2, fontFamily: fonts.body },
   signOutLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
+  queuedChip: {
+    backgroundColor: colors.warn,
+    borderRadius: radius.md,
+    padding: 12,
+    marginBottom: 16,
+  },
+  queuedChipText: { fontSize: 13, fontFamily: fonts.bodySemiBold, color: colors.warnForeground },
   reviewButtonSpacing: { marginTop: 12 },
   sectionTitle: {
     fontSize: 11,

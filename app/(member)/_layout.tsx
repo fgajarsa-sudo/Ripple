@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { registerPushToken } from '../../lib/registerPushToken';
 import { useSession } from '../../lib/SessionProvider';
+import { startSyncListeners } from '../../lib/syncEngine';
 import { colors, fonts } from '../../lib/theme';
 import { useMembership } from '../../lib/useMembership';
 
@@ -16,6 +17,14 @@ export default function MemberLayout() {
     if (session?.user.id) {
       void registerPushToken(session.user.id);
     }
+  }, [session?.user.id]);
+
+  useEffect(() => {
+    if (!session?.user.id) return;
+    // Syncs immediately on mount (covers app-open-while-online) and again whenever
+    // connectivity is regained — the whole point of a local queue is that submissions
+    // made offline shouldn't need the user to remember to come back and retry.
+    return startSyncListeners(session.user.id);
   }, [session?.user.id]);
 
   if (sessionLoading || (session && membershipLoading)) {

@@ -67,7 +67,30 @@ the spec's prose and the reference Lovable prototype disagreed, and only the use
   fields instead of a map picker (no `react-native-maps`); date/time on a submission is captured
   automatically, not user-editable; `sync_client_id` isn't populated yet (Phase 4 is offline —
   genuinely not needed before then).
-- Not yet built: Phase 4 (offline queue/sync), Phase 5 (account deletion, my-data export, the
+- **Phase 4 (offline queue/sync) is code-complete.** Submissions always go through a local
+  SQLite queue first (`lib/offlineQueue.ts`), then an immediate sync attempt
+  (`lib/syncEngine.ts`); if that succeeds the user sees the normal "submitted" screen, if not
+  they see a "queued" variant and the item stays in the queue. `sync_client_id` (already present
+  in the schema since migration 001, unused until now) is the idempotency key — a `23505` unique
+  violation on retry is treated as a successful sync, not an error, since it means a prior attempt
+  landed server-side even though the client never saw the response. Sync is triggered three ways:
+  immediately after a submission, on `NetInfo` reconnect events, and once on mount — all wired via
+  `startSyncListeners()` in `app/(member)/_layout.tsx`. Photos are copied out of the camera's
+  cache into the app's permanent document directory at enqueue time (`expo-file-system`'s
+  `File`/`Directory`/`Paths`, not the pre-SDK-54 API) so they survive until the device is back
+  online. History and Home show queue state (per-item status badges, a queued-count chip)
+  by polling the local SQLite queue every 4s while those screens are focused — deliberately
+  simple over wiring a pub-sub between `offlineQueue.ts` and the UI, since queue reads are cheap
+  and local.
+  Site auto-matching and membership lookup needed no new offline-caching work: the whole app
+  already runs every query through `PersistQueryClientProvider` (`lib/queryClient.ts`,
+  AsyncStorage-backed, 24h `gcTime`), so `sites` and `membership` queries are restored from disk
+  on cold start even with no connection, as long as the app was opened online at least once in
+  the last 24h.
+  Not yet tested on a real device in airplane mode — the queue/sync logic is typechecked and
+  unit-testable pieces are covered, but true offline behavior (kill connectivity mid-session,
+  submit, restore connectivity, confirm auto-sync) needs a live device pass.
+- Not yet built: Phase 5 (account deletion, my-data export, the
   separate Ripple platform web dashboard).
 
 ## Repo layout
