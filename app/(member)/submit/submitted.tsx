@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../../components/AppHeader';
+import { RippleCelebration } from '../../../components/RippleCelebration';
 import { PillButton } from '../../../components/ui';
 import { UrgencyBadge } from '../../../components/UrgencyBadge';
 import { colors, fonts } from '../../../lib/theme';
@@ -31,8 +32,10 @@ export default function SubmittedStep() {
       <AppHeader />
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.content}>
+          <RippleCelebration />
           <Text style={styles.checkmark}>✓</Text>
           <Text style={styles.title}>Reading submitted</Text>
+          <Text style={styles.tagline}>Every reading makes a difference.</Text>
 
           {validUrgency && <UrgencyBadge urgency={validUrgency} />}
           <Text style={styles.message}>
@@ -54,5 +57,6 @@ const styles = StyleSheet.create({
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   checkmark: { fontSize: 48, color: colors.teal },
   title: { fontFamily: fonts.display, fontSize: 24, color: colors.navy },
+  tagline: { fontFamily: fonts.bodySemiBold, fontSize: 14, color: colors.teal },
   message: { fontSize: 15, color: colors.mutedForeground, textAlign: 'center', paddingHorizontal: 16, fontFamily: fonts.body },
 });
