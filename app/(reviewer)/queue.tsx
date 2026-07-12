@@ -46,7 +46,13 @@ export default function ReviewQueue() {
 
   return (
     <View style={styles.root}>
-      <AppHeader />
+      <AppHeader
+        right={
+          <Pressable onPress={() => router.replace('/(member)/home')}>
+            <Text style={styles.homeLink}>Home</Text>
+          </Pressable>
+        }
+      />
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.titleRow}>
           <ScreenTitle>Review queue</ScreenTitle>
@@ -104,6 +110,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.cream },
   container: { flex: 1, padding: 24 },
   titleRow: { marginTop: 8, marginBottom: 16 },
+  homeLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
   filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
   chip: {
     borderWidth: 1,
