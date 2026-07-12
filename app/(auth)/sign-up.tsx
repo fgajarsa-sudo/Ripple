@@ -20,6 +20,7 @@ export default function SignUp() {
   const [ageAttested, setAgeAttested] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [awaitingEmailConfirmation, setAwaitingEmailConfirmation] = useState(false);
 
   const onSubmit = async () => {
     const parsed = schema.safeParse({ displayName, email, password, ageAttested });
@@ -31,7 +32,7 @@ export default function SignUp() {
     setIsSubmitting(true);
     // handle_new_user() trigger (migration 001) reads this metadata to seed
     // profiles.display_name and profiles.age_attested_at.
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
@@ -46,8 +47,29 @@ export default function SignUp() {
       setErrorMessage(error.message);
       return;
     }
+    // Supabase issues no session until the email is confirmed (project-dependent) — without
+    // this check, the app would silently push forward into join-group with no real session,
+    // and every subsequent authenticated action would fail with an opaque permission error.
+    if (!data.session) {
+      setAwaitingEmailConfirmation(true);
+      return;
+    }
     router.replace('/(auth)/join-group');
   };
+
+  if (awaitingEmailConfirmation) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.title}>Check your email</Text>
+        <Text style={styles.legalText}>
+          We sent a confirmation link to {email}. Tap it, then come back and sign in below.
+        </Text>
+        <Link href="/(auth)/sign-in" style={[styles.button, { alignItems: 'center' }]}>
+          <Text style={styles.buttonText}>Go to sign in</Text>
+        </Link>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>

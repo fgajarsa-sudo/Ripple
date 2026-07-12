@@ -85,7 +85,12 @@ export default function JoinGroup() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Join a group</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Join a group</Text>
+        <Pressable onPress={() => supabase.auth.signOut().then(() => router.replace('/(auth)/welcome'))}>
+          <Text style={styles.signOutLink}>Sign out</Text>
+        </Pressable>
+      </View>
 
       <View style={styles.tabRow}>
         <Pressable
@@ -161,7 +166,15 @@ export default function JoinGroup() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 24 },
-  title: { fontSize: 28, fontWeight: '700', color: '#0f4c5c', marginTop: 12, marginBottom: 16 },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  title: { fontSize: 28, fontWeight: '700', color: '#0f4c5c' },
+  signOutLink: { fontSize: 14, color: '#4a5a5f' },
   tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   tab: {
     flex: 1,
