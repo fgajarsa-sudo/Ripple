@@ -59,7 +59,8 @@
           "icon": "./assets/icon.png"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-sharing"
     ],
     "extra": {
       "router": {},

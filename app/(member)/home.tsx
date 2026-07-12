@@ -67,6 +67,12 @@ export default function Home() {
           </View>
         )}
 
+        {membership?.role === 'admin' && (
+          <View style={styles.reviewButtonSpacing}>
+            <PillButton title="Admin" variant="secondary" onPress={() => router.push('/(admin)')} />
+          </View>
+        )}
+
         <Text style={styles.sectionTitle}>GROUP ALERTS</Text>
         <FlatList
           data={notifications}

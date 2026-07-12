@@ -31,40 +31,49 @@ the spec's prose and the reference Lovable prototype disagreed, and only the use
 
 ## Phase status
 
-- **Phase 0** (foundations), **Phase 1** (core submit loop), and **Phase 2** (AI + review) are
-  code-complete. Phase 2 adds: the `analyze-submission` Edge Function (deployed, live-tested with
-  a real Anthropic key — both the medium and HIGH severity paths verified against the linked
-  project), the `on_submission_created_analyze` database webhook trigger (migration 003, auth'd
-  via a Vault-generated shared secret, not a hardcoded one), `ai_usage_log` for per-org token cost
-  tracking, Expo push token registration, and the reviewer queue + detail screens
-  (`app/(reviewer)/`) with validate/reject/note actions.
-- Guardrail note: the function *always* calls Claude when a key is present, even when rule-based
-  severity is already HIGH — an earlier version skipped the call in that case to save cost, but
-  that meant the most important submissions never got an AI summary, which defeats the point for
-  reviewers. The guardrail only stops AI from *lowering* a rule-based HIGH, never from running.
-- Verified via `npm run typecheck`, `npm test`, `expo-doctor`, the RLS suite, and live end-to-end
-  webhook + Claude API tests against the pilot project (test fixtures created and cleaned up
-  immediately after) — **still not yet verified on an actual device or simulator**. Expo Go's App
-  Store build hasn't caught up to Expo SDK 57 yet (Apple review lag, not a project bug); this
-  machine also has no Docker/Android/iOS simulator. Do an end-to-end run-through on a phone once
-  Expo Go updates before trusting the UI beyond what static checks can catch.
-- Simplifications made to stay within §3's "keep dependencies minimal" rule, to revisit if the
-  product needs more later: location step uses editable text fields instead of a map picker (no
-  `react-native-maps`); date/time on a submission is captured automatically, not user-editable
-  (no date/time picker library); `sync_client_id` isn't populated yet (Phase 1 is online-only per
-  §13 — offline dedupe is genuinely Phase 4 work).
-- The Submitted screen's copy avoids claiming "reviewers were alerted" for HIGH, since real push
-  delivery wasn't wired up when that screen was first built — it now is (Phase 2's HIGH
-  auto-alert push), so that copy is a candidate to revisit and make more assertive.
-- `send-notification` (admin-composed notifications with targeting: all/active_30d/site) is
-  explicitly Phase 3 — only the automatic HIGH-urgency push exists so far, inlined in
-  `analyze-submission` rather than going through a general-purpose notification function.
+- **Phase 0–3 are code-complete.** Phase 3 adds the full admin surface (`app/(admin)/`):
+  thresholds editor (with reset-to-defaults via `reset_org_thresholds()`, migration 006),
+  sites manager, members + role changes + invite codes with QR rendering
+  (`react-native-qrcode-svg`, code generation via `admin_create_invite()`, migration 005),
+  a notification composer (`send-notification` Edge Function — targeting: all/active_30d/site,
+  Expo Push chunked in 100s, prunes dead tokens it can detect synchronously), and CSV export
+  (`export-org-data` Edge Function, `expo-file-system` + `expo-sharing` to save/share the file).
+- Both new Edge Functions are deployed with **default JWT verification** (unlike
+  `analyze-submission`, which uses `--no-verify-jwt` + a Vault secret since its caller is a DB
+  trigger) — these are called directly by a logged-in admin, so the real user JWT is what
+  identifies them; a service-role client is only used where RLS genuinely can't do the job
+  (`send-notification`'s token resolution — `notifications`/`profiles` writes need it,
+  `export-org-data` doesn't, since admins already have full RLS read access to their own org's
+  submissions).
+- Real bug found via live-testing `export-org-data`: `submissions` has two FKs to `profiles`
+  (`user_id` and `reviewed_by`), so `.select('profiles(display_name)')` failed with "more than
+  one relationship was found" — PostgREST can't guess which FK to embed on. Fixed with the
+  explicit hint `profiles!submissions_user_id_fkey(display_name)`. Watch for this same ambiguity
+  anywhere else a table has >1 FK into the same target (e.g. any future join through
+  `reviewed_by`).
+- **This app has real users now.** iOS distribution is live via TestFlight (not Expo Go — SDK 57
+  never caught up on the App Store, so we went straight to a real signed build) and Android via a
+  directly-shared EAS-built APK (no Play Store needed for internal testing). Bugs already found
+  and fixed through actual device use, not just static checks: missing `EXPO_PUBLIC_SUPABASE_*`
+  EAS environment variables (crashed on launch — local `.env` isn't visible to EAS cloud builds),
+  a case-sensitive invite-code comparison, sign-up not handling the "no session until email
+  confirmed" case, a navigation dead-end from the reviewer queue back to Home, and an app icon
+  with an alpha channel (TestFlight accepted it; real App Store review wouldn't have). Treat
+  "typecheck passes" as necessary, never sufficient — this project has a track record of shipping
+  real bugs past static checks.
+- Simplifications made to stay within §3's "keep dependencies minimal" rule, revisited each time
+  a real feature needed more (sites, QR codes, CSV export all added a small targeted dependency
+  when the feature genuinely required it — not speculatively): location/sites use editable text
+  fields instead of a map picker (no `react-native-maps`); date/time on a submission is captured
+  automatically, not user-editable; `sync_client_id` isn't populated yet (Phase 4 is offline —
+  genuinely not needed before then).
+- Not yet built: Phase 4 (offline queue/sync), Phase 5 (account deletion, my-data export, the
+  separate Ripple platform web dashboard).
 
 ## Repo layout
 
-See spec §3. Route groups under `app/`: `(auth)`, `(member)`, and `(reviewer)` exist. `(admin)`
-gets created when Phase 3 starts — don't scaffold empty route groups ahead of the screens that
-belong in them.
+See spec §3. Route groups under `app/`: `(auth)`, `(member)`, `(reviewer)`, and `(admin)` all
+exist now.
 
 ## Environment
 
