@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppHeader } from '../../../components/AppHeader';
 import { Input, PillButton, ScreenTitle } from '../../../components/ui';
 import { colors, fonts, radius } from '../../../lib/theme';
 import { distanceMeters } from '../../../lib/geo';
@@ -17,7 +18,7 @@ const WEATHER_OPTIONS = ['Clear', 'Partly Cloudy', 'Overcast', 'Raining', 'Storm
 type Site = { id: string; name: string; lat: number; lng: number; radius_m: number };
 
 export default function LocationStep() {
-  const { draft, updateDraft } = useSubmitDraft();
+  const { draft, updateDraft, resetDraft } = useSubmitDraft();
   const { data: membership } = useMembership();
   const [locating, setLocating] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -80,8 +81,21 @@ export default function LocationStep() {
 
   const canProceed = draft.lat !== null && draft.lng !== null && !!draft.weather;
 
+  const onCancel = () => {
+    resetDraft();
+    router.replace('/(member)/home');
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.root}>
+      <AppHeader
+        right={
+          <Pressable onPress={onCancel}>
+            <Text style={styles.cancelLink}>Cancel</Text>
+          </Pressable>
+        }
+      />
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>Where are you?</ScreenTitle>
 
@@ -160,12 +174,15 @@ export default function LocationStep() {
       <View style={styles.nextButtonWrap}>
         <PillButton title="Next" onPress={() => router.push('/(member)/submit/photo')} disabled={!canProceed} />
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  root: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1 },
+  cancelLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
   content: { padding: 24, gap: 16 },
   locatingIndicator: { marginTop: 24 },
   locationCard: { gap: 10 },

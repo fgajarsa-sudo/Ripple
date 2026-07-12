@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppHeader } from '../../../components/AppHeader';
 import { PillButton } from '../../../components/ui';
 import { UrgencyBadge } from '../../../components/UrgencyBadge';
 import { colors, fonts } from '../../../lib/theme';
@@ -26,26 +27,30 @@ export default function SubmittedStep() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.checkmark}>✓</Text>
-        <Text style={styles.title}>Reading submitted</Text>
+    <View style={styles.root}>
+      <AppHeader />
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <View style={styles.content}>
+          <Text style={styles.checkmark}>✓</Text>
+          <Text style={styles.title}>Reading submitted</Text>
 
-        {validUrgency && <UrgencyBadge urgency={validUrgency} />}
-        <Text style={styles.message}>
-          {validUrgency
-            ? URGENCY_MESSAGE[validUrgency]
-            : "Thanks for your submission — your reading has been added to the group's records."}
-        </Text>
-      </View>
+          {validUrgency && <UrgencyBadge urgency={validUrgency} />}
+          <Text style={styles.message}>
+            {validUrgency
+              ? URGENCY_MESSAGE[validUrgency]
+              : "Thanks for your submission — your reading has been added to the group's records."}
+          </Text>
+        </View>
 
-      <PillButton title="Done" onPress={() => router.replace('/(member)/home')} />
-    </SafeAreaView>
+        <PillButton title="Done" onPress={() => router.replace('/(member)/home')} />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream, justifyContent: 'space-between', padding: 24 },
+  root: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, justifyContent: 'space-between', padding: 24 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   checkmark: { fontSize: 48, color: colors.teal },
   title: { fontFamily: fonts.display, fontSize: 24, color: colors.navy },

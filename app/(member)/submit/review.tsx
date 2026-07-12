@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppHeader } from '../../../components/AppHeader';
 import { ErrorText, PillButton, ScreenTitle } from '../../../components/ui';
 import { colors, fonts, radius } from '../../../lib/theme';
 import { SENSOR_PARAMETERS } from '../../../lib/readings';
@@ -12,7 +13,7 @@ import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
 import { useMembership } from '../../../lib/useMembership';
 
 export default function ReviewStep() {
-  const { draft } = useSubmitDraft();
+  const { draft, resetDraft } = useSubmitDraft();
   const { session } = useSession();
   const { data: membership } = useMembership();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,8 +38,21 @@ export default function ReviewStep() {
     }
   };
 
+  const onCancel = () => {
+    resetDraft();
+    router.replace('/(member)/home');
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.root}>
+      <AppHeader
+        right={
+          <Pressable onPress={onCancel}>
+            <Text style={styles.cancelLink}>Cancel</Text>
+          </Pressable>
+        }
+      />
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>Review & submit</ScreenTitle>
 
@@ -99,12 +113,15 @@ export default function ReviewStep() {
       <View style={styles.submitButtonWrap}>
         <PillButton title="Submit Reading" onPress={onSubmit} loading={isSubmitting} />
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream },
+  root: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1 },
+  cancelLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
   content: { padding: 24, gap: 20 },
   section: { gap: 6, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 16 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

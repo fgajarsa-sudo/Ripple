@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Logo } from '../../components/Logo';
 import { ErrorText, Input, PillButton, ScreenTitle } from '../../components/ui';
 import { colors, fonts, radius } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
@@ -80,7 +81,10 @@ export default function JoinGroup() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerRow}>
-        <ScreenTitle>Join a group</ScreenTitle>
+        <View style={styles.titleRow}>
+          <Logo size={32} />
+          <ScreenTitle>Join a group</ScreenTitle>
+        </View>
         <Pressable onPress={() => supabase.auth.signOut().then(() => router.replace('/(auth)/welcome'))}>
           <Text style={styles.signOutLink}>Sign out</Text>
         </Pressable>
@@ -154,6 +158,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     marginBottom: 16,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   signOutLink: { fontSize: 14, color: colors.mutedForeground, fontFamily: fonts.body },
   tabRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },

@@ -4,12 +4,13 @@ import { useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppHeader } from '../../../components/AppHeader';
 import { ScreenTitle } from '../../../components/ui';
 import { colors, fonts, radius } from '../../../lib/theme';
 import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
 
 export default function PhotoStep() {
-  const { draft, updateDraft } = useSubmitDraft();
+  const { draft, updateDraft, resetDraft } = useSubmitDraft();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -28,65 +29,95 @@ export default function PhotoStep() {
   };
 
   const goNext = () => router.push('/(member)/submit/data');
+  const onCancel = () => {
+    resetDraft();
+    router.replace('/(member)/home');
+  };
+
+  const header = (
+    <AppHeader
+      right={
+        <Pressable onPress={onCancel}>
+          <Text style={styles.cancelLink}>Cancel</Text>
+        </Pressable>
+      }
+    />
+  );
 
   if (draft.photoUri) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ScreenTitle>Capture the water</ScreenTitle>
-        <Image source={{ uri: draft.photoUri }} style={styles.preview} />
-        <View style={styles.previewActions}>
-          <Pressable style={styles.retakeButton} onPress={() => updateDraft({ photoUri: null })}>
-            <Text style={styles.retakeButtonText}>Retake</Text>
-          </Pressable>
-          <Pressable style={styles.nextButton} onPress={goNext}>
-            <Text style={styles.nextButtonText}>Next</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+      <View style={styles.root}>
+        {header}
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+          <ScreenTitle>Capture the water</ScreenTitle>
+          <Image source={{ uri: draft.photoUri }} style={styles.preview} />
+          <View style={styles.previewActions}>
+            <Pressable style={styles.retakeButton} onPress={() => updateDraft({ photoUri: null })}>
+              <Text style={styles.retakeButtonText}>Retake</Text>
+            </Pressable>
+            <Pressable style={styles.nextButton} onPress={goNext}>
+              <Text style={styles.nextButtonText}>Next</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
   if (!permission) {
-    return <SafeAreaView style={styles.container} />;
+    return (
+      <View style={styles.root}>
+        {header}
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']} />
+      </View>
+    );
   }
 
   if (!permission.granted) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ScreenTitle>Capture the water</ScreenTitle>
-        <Text style={styles.hint}>A photo helps our AI assess visible conditions.</Text>
-        <Pressable style={styles.permissionButton} onPress={requestPermission}>
-          <Text style={styles.nextButtonText}>Allow camera access</Text>
-        </Pressable>
-        <Pressable style={styles.skipButton} onPress={goNext}>
-          <Text style={styles.skipButtonText}>Skip photo</Text>
-        </Pressable>
-      </SafeAreaView>
+      <View style={styles.root}>
+        {header}
+        <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+          <ScreenTitle>Capture the water</ScreenTitle>
+          <Text style={styles.hint}>A photo helps our AI assess visible conditions.</Text>
+          <Pressable style={styles.permissionButton} onPress={requestPermission}>
+            <Text style={styles.nextButtonText}>Allow camera access</Text>
+          </Pressable>
+          <Pressable style={styles.skipButton} onPress={goNext}>
+            <Text style={styles.skipButtonText}>Skip photo</Text>
+          </Pressable>
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScreenTitle>Capture the water</ScreenTitle>
-      <Text style={styles.hint}>Lake surface, top-down works best</Text>
-      <View style={styles.cameraWrapper}>
-        <CameraView ref={cameraRef} style={styles.camera} facing="back" />
-      </View>
-      <View style={styles.previewActions}>
-        <Pressable style={styles.skipButton} onPress={goNext}>
-          <Text style={styles.skipButtonText}>Skip</Text>
-        </Pressable>
-        <Pressable style={styles.captureButton} onPress={onCapture} disabled={isCapturing}>
-          <View style={styles.captureButtonInner} />
-        </Pressable>
-        <View style={{ width: 60 }} />
-      </View>
-    </SafeAreaView>
+    <View style={styles.root}>
+      {header}
+      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+        <ScreenTitle>Capture the water</ScreenTitle>
+        <Text style={styles.hint}>Lake surface, top-down works best</Text>
+        <View style={styles.cameraWrapper}>
+          <CameraView ref={cameraRef} style={styles.camera} facing="back" />
+        </View>
+        <View style={styles.previewActions}>
+          <Pressable style={styles.skipButton} onPress={goNext}>
+            <Text style={styles.skipButtonText}>Skip</Text>
+          </Pressable>
+          <Pressable style={styles.captureButton} onPress={onCapture} disabled={isCapturing}>
+            <View style={styles.captureButtonInner} />
+          </Pressable>
+          <View style={{ width: 60 }} />
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream, padding: 24, gap: 12 },
+  root: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, padding: 24, gap: 12 },
+  cancelLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
   hint: { fontSize: 14, color: colors.mutedForeground, fontFamily: fonts.body },
   cameraWrapper: { flex: 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: '#000' },
   camera: { flex: 1 },
