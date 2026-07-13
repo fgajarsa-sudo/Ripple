@@ -134,11 +134,15 @@ the spec's prose and the reference Lovable prototype disagreed, and only the use
   What this gets you now: JS-level error/crash reporting. What's deliberately deferred: fully
   symbolicated native crash stack traces, which need a Sentry auth token for source-map/debug-
   symbol upload during EAS builds (the `@sentry/react-native/expo` plugin's build-hook side) —
-  the plugin is installed but org/project/auth-token aren't configured in `app.json` yet, so
-  that upload step is currently a no-op rather than a build failure. Add
+  the plugin is installed but org/project/auth-token aren't configured in `app.json` yet. Add
   `organization`/`project` to the plugin config + `SENTRY_AUTH_TOKEN` as an EAS secret to turn
   it on. Not yet verified against a real crash on a real device — that needs the next
   TestFlight/APK build in testers' hands.
+  Real bug found while shipping this: without org/project configured, the Sentry build-hook
+  script doesn't skip the source-map upload quietly — it hard-fails both the Xcode and Gradle
+  builds ("An organization ID or slug is required"). Fixed with `SENTRY_DISABLE_AUTO_UPLOAD=true`
+  as an EAS env var (all three environments) — Sentry's own documented escape hatch for
+  deferring source-map upload setup. Remove that var once org/project/auth-token are wired up.
 - Not yet built: Phase 5 item 4 (the separate Ripple platform web dashboard) and the remaining
   Phase 6 items (EAS Update OTA channel — `runtimeVersion`/`updates.url` are already present in
   `app.json` from `eas init`, but no update has actually been published to the `pilot` channel
