@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
@@ -98,6 +99,15 @@ export default function SettingsScreen() {
     );
   };
 
+  // Temporary — the rest of the app deliberately catches its own errors and shows a friendly
+  // message instead of crashing, so there's no organic way to produce a Sentry event from
+  // normal use. This button exists only to confirm the DSN/build wiring actually reaches
+  // Sentry before trusting it in the field; remove once that's confirmed.
+  const onSendTestError = () => {
+    Sentry.captureException(new Error('Ripple Sentry verification test — safe to ignore'));
+    Alert.alert('Test error sent', "Check the Sentry dashboard in a minute — it should show up as a new issue.");
+  };
+
   const performDelete = async () => {
     if (!session?.access_token) return;
     setErrorMessage(null);
@@ -152,6 +162,12 @@ export default function SettingsScreen() {
             onPress={onDeleteAccount}
             loading={isDeleting}
           />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>DEBUG</Text>
+          <Text style={styles.hint}>Sends one test error to Sentry — used to confirm crash reporting works.</Text>
+          <PillButton title="Send test error" variant="secondary" onPress={onSendTestError} />
         </View>
 
         {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
