@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,19 +10,64 @@ import { isPlausible } from '../../../lib/plausibleRanges';
 import { roundToParameterPrecision, SENSOR_PARAMETERS, type SensorParameterKey } from '../../../lib/readings';
 import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
 
+// A controlled input whose displayed text is driven straight from the rounded numeric value
+// fights the user mid-keystroke: typing "7." parses to 7, rounds to 7, and forces the display
+// back to "7" before a decimal digit can ever follow. This keeps its own local text and only
+// resyncs from the committed value when it's genuinely different from what's locally typed
+// (e.g. the draft was reset) — not on every round-trip through the same number.
+function ReadingInput({
+  paramKey,
+  value,
+  placeholder,
+  onCommit,
+}: {
+  paramKey: SensorParameterKey;
+  value: number | undefined;
+  placeholder: string;
+  onCommit: (key: SensorParameterKey, value: number | undefined) => void;
+}) {
+  const [text, setText] = useState(value !== undefined ? String(value) : '');
+
+  useEffect(() => {
+    const currentNum = text.trim() === '' ? undefined : Number(text.trim());
+    if (value !== currentNum) {
+      setText(value !== undefined ? String(value) : '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const handleChangeText = (t: string) => {
+    setText(t);
+    const trimmed = t.trim();
+    if (trimmed === '') {
+      onCommit(paramKey, undefined);
+      return;
+    }
+    const num = Number(trimmed);
+    if (!Number.isNaN(num)) {
+      onCommit(paramKey, roundToParameterPrecision(paramKey, num));
+    }
+  };
+
+  return (
+    <Input
+      keyboardType="numbers-and-punctuation"
+      value={text}
+      onChangeText={handleChangeText}
+      placeholder={placeholder}
+    />
+  );
+}
+
 export default function DataStep() {
   const { draft, updateDraft, resetDraft } = useSubmitDraft();
 
-  const onChangeValue = (key: SensorParameterKey, text: string) => {
-    const trimmed = text.trim();
+  const onCommitValue = (key: SensorParameterKey, value: number | undefined) => {
     const next = { ...draft.readings };
-    if (trimmed === '') {
+    if (value === undefined) {
       delete next[key];
     } else {
-      const num = Number(trimmed);
-      if (!Number.isNaN(num)) {
-        next[key] = roundToParameterPrecision(key, num);
-      }
+      next[key] = value;
     }
     updateDraft({ readings: next });
   };
@@ -54,11 +100,11 @@ export default function DataStep() {
                   <Text style={styles.fieldLabel}>{param.label}</Text>
                   {param.unit ? <Text style={styles.fieldUnit}>{param.unit}</Text> : null}
                 </View>
-                <Input
-                  keyboardType="numbers-and-punctuation"
-                  value={value !== undefined ? String(value) : ''}
-                  onChangeText={(t) => onChangeValue(param.key, t)}
+                <ReadingInput
+                  paramKey={param.key}
+                  value={value}
                   placeholder={param.hint}
+                  onCommit={onCommitValue}
                 />
                 <Text style={styles.fieldHint}>{param.hint}</Text>
                 {showWarning && (
