@@ -163,7 +163,7 @@ export default function LocationStep() {
                   <Pressable
                     key={site.id}
                     style={[styles.siteChip, draft.siteId === site.id && styles.siteChipActive]}
-                    onPress={() => updateDraft({ siteId: site.id, siteName: site.name })}
+                    onPress={() => updateDraft({ siteId: site.id, siteName: site.name, lat: site.lat, lng: site.lng })}
                   >
                     <Text
                       style={[
