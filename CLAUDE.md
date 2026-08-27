@@ -143,11 +143,36 @@ the spec's prose and the reference Lovable prototype disagreed, and only the use
   builds ("An organization ID or slug is required"). Fixed with `SENTRY_DISABLE_AUTO_UPLOAD=true`
   as an EAS env var (all three environments) — Sentry's own documented escape hatch for
   deferring source-map upload setup. Remove that var once org/project/auth-token are wired up.
+- **External TestFlight testing is live.** An external group (public link, Apple-approved) is
+  set up in App Store Connect alongside the Android APK link — both are real, installable links
+  a non-technical tester can use with zero Apple ID/account setup on your end. Source is also
+  public now: https://github.com/fgajarsa-sudo/Ripple (checked for secrets before pushing —
+  clean; only `.p8`/`.env`/`credentials/` paths are gitignored, never their contents).
 - Not yet built: Phase 5 item 4 (the separate Ripple platform web dashboard) and the remaining
   Phase 6 items (EAS Update OTA channel — `runtimeVersion`/`updates.url` are already present in
   `app.json` from `eas init`, but no update has actually been published to the `pilot` channel
-  yet; a volunteer install guide; an external TestFlight tester group for actual SLA
-  volunteers, as opposed to the internal team-only group in use now).
+  yet; a volunteer install guide).
+- **Real bugs found via external beta testing, fixed:**
+  - Offline readings taken in dead zones weren't syncing once the tester regained signal.
+    Root cause: `startSyncListeners()` (`lib/syncEngine.ts`) only re-ran sync on a `NetInfo`
+    connectivity *transition* event or on app mount — but iOS suspends JS execution while the
+    app is backgrounded, so a transition that happens while the phone is locked/in a pocket
+    never reaches that listener. Fixed by also triggering a sync check on `AppState` going
+    `active` (catches "resumed from background after regaining signal") and a 60s interval
+    safety net (catches connectivity flickering back without either a clean transition or a
+    foreground event). Lakes are a notoriously bad-signal environment, so this class of gap is
+    worth taking seriously rather than patching narrowly.
+  - Sensor readings and admin thresholds now round to a consistent 3 decimal places
+    (`roundToParameterPrecision()` in `lib/readings.ts`), applied when a reading is entered and
+    when thresholds are saved. All 7 parameters use the same precision — `specific_gravity`
+    needed at least ~3 decimals to stay meaningful (its whole useful range is ~0.99–1.03) and
+    the team preferred uniform precision over a mixed per-parameter scheme.
+  - Location step now includes a `react-native-maps` `MapView` with a draggable marker
+    alongside the existing lat/lng text fields, since manually typing coordinates wasn't the
+    easiest way to confirm/adjust a GPS fix. Works immediately on iOS (Apple Maps, no key
+    needed). **Android needs a Google Maps API key** (`android.config.googleMaps.apiKey` in
+    `app.json`) before map tiles will render there — not yet configured, since it requires the
+    org's own Google Cloud project/billing.
 
 ## Repo layout
 
