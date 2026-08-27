@@ -6,7 +6,7 @@ import { AppHeader } from '../../../components/AppHeader';
 import { Input, PillButton, ScreenTitle } from '../../../components/ui';
 import { colors, fonts } from '../../../lib/theme';
 import { isPlausible } from '../../../lib/plausibleRanges';
-import { SENSOR_PARAMETERS, type SensorParameterKey } from '../../../lib/readings';
+import { roundToParameterPrecision, SENSOR_PARAMETERS, type SensorParameterKey } from '../../../lib/readings';
 import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
 
 export default function DataStep() {
@@ -20,7 +20,7 @@ export default function DataStep() {
     } else {
       const num = Number(trimmed);
       if (!Number.isNaN(num)) {
-        next[key] = num;
+        next[key] = roundToParameterPrecision(key, num);
       }
     }
     updateDraft({ readings: next });

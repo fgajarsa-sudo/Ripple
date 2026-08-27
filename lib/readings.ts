@@ -14,3 +14,22 @@ export const SENSOR_PARAMETERS = [
 export type SensorParameterKey = (typeof SENSOR_PARAMETERS)[number]['key'];
 
 export type SensorReadings = Partial<Record<SensorParameterKey, number>>;
+
+// Three decimal places for every parameter, per admin/field-tester feedback — keeps precision
+// consistent across the board and, critically, keeps specific_gravity meaningful (its whole
+// useful range sits between roughly 0.99 and 1.03, so anything coarser than ~3 decimals
+// collapses distinct values together).
+export const DECIMAL_PLACES: Record<SensorParameterKey, number> = {
+  temp_f: 3,
+  ph: 3,
+  ec: 3,
+  tds: 3,
+  salinity: 3,
+  specific_gravity: 3,
+  orp: 3,
+};
+
+export function roundToParameterPrecision(key: SensorParameterKey, value: number): number {
+  const factor = 10 ** DECIMAL_PLACES[key];
+  return Math.round(value * factor) / factor;
+}

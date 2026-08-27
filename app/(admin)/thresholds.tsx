@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '../../components/AppHeader';
 import { Input, PillButton, ScreenTitle } from '../../components/ui';
 import { colors, fonts } from '../../lib/theme';
-import { SENSOR_PARAMETERS, type SensorParameterKey } from '../../lib/readings';
+import { roundToParameterPrecision, SENSOR_PARAMETERS, type SensorParameterKey } from '../../lib/readings';
 import { supabase } from '../../lib/supabase';
 import { useMembership } from '../../lib/useMembership';
 
@@ -81,8 +81,8 @@ export default function ThresholdsScreen() {
             org_id: membership.org_id,
             parameter: param.key,
             severity,
-            min_value: entry.min === '' ? null : Number(entry.min),
-            max_value: entry.max === '' ? null : Number(entry.max),
+            min_value: entry.min === '' ? null : roundToParameterPrecision(param.key, Number(entry.min)),
+            max_value: entry.max === '' ? null : roundToParameterPrecision(param.key, Number(entry.max)),
           };
         })
       );

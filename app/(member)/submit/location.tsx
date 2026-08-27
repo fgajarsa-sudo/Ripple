@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE, type MapPressEvent } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../../components/AppHeader';
@@ -79,6 +80,10 @@ export default function LocationStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.lat, draft.lng, sites]);
 
+  const onMapChange = (lat: number, lng: number) => {
+    updateDraft({ lat, lng, siteId: null, siteName: null });
+  };
+
   const canProceed = draft.lat !== null && draft.lng !== null && !!draft.weather;
 
   const onCancel = () => {
@@ -123,6 +128,34 @@ export default function LocationStep() {
                 onChangeText={(t) => updateDraft({ lng: t ? Number(t) : null, siteId: null, siteName: null })}
               />
             </View>
+            {draft.lat !== null && draft.lng !== null && (
+              <>
+                <Text style={styles.mapHint}>Tap or drag the pin to fine-tune — sometimes typing coordinates isn't the easiest way.</Text>
+                <MapView
+                  provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+                  style={styles.map}
+                  region={{
+                    latitude: draft.lat,
+                    longitude: draft.lng,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  }}
+                  onPress={(e: MapPressEvent) => {
+                    const { latitude, longitude } = e.nativeEvent.coordinate;
+                    onMapChange(latitude, longitude);
+                  }}
+                >
+                  <Marker
+                    coordinate={{ latitude: draft.lat, longitude: draft.lng }}
+                    draggable
+                    onDragEnd={(e) => {
+                      const { latitude, longitude } = e.nativeEvent.coordinate;
+                      onMapChange(latitude, longitude);
+                    }}
+                  />
+                </MapView>
+              </>
+            )}
             {draft.siteName && <Text style={styles.siteMatch}>Site: {draft.siteName} ✓</Text>}
             {sites && sites.length > 0 && (
               <View style={styles.siteList}>
@@ -190,6 +223,8 @@ const styles = StyleSheet.create({
   warning: { color: colors.destructive, fontSize: 13, fontFamily: fonts.body },
   coordRow: { flexDirection: 'row', gap: 10 },
   coordInput: { flex: 1 },
+  mapHint: { fontSize: 12, color: colors.mutedForeground, fontFamily: fonts.body },
+  map: { width: '100%', height: 180, borderRadius: radius.md },
   siteMatch: { fontSize: 15, color: colors.teal, fontFamily: fonts.bodySemiBold },
   siteList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   siteChip: {

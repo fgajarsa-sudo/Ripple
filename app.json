@@ -62,7 +62,8 @@
       "expo-font",
       "expo-sharing",
       "expo-sqlite",
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "expo-status-bar"
     ],
     "extra": {
       "router": {},

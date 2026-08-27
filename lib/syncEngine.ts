@@ -1,5 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import * as Notifications from 'expo-notifications';
+import { AppState, type AppStateStatus } from 'react-native';
 
 import {
   listQueuedSubmissions,
@@ -87,8 +88,28 @@ export async function runSync(userId: string): Promise<void> {
 
 export function startSyncListeners(userId: string): () => void {
   void runSync(userId);
-  const subscription = NetInfo.addEventListener((state) => {
+
+  const netSubscription = NetInfo.addEventListener((state) => {
     if (state.isConnected) void runSync(userId);
   });
-  return () => subscription();
+
+  // Lakes have notoriously spotty signal, and iOS suspends JS execution while the app is
+  // backgrounded — so a NetInfo "connected" transition can happen while the screen is off
+  // and never reach this listener. Re-check whenever the app comes back to the foreground
+  // too; that's what actually catches "took several readings in a dead zone, phone regained
+  // signal while it sat in a pocket with the screen locked."
+  const appStateSubscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+    if (nextState === 'active') void runSync(userId);
+  });
+
+  // Safety net on top of both: retry on a fixed interval in case connectivity flickers back
+  // without a clean transition event either way. Cheap — runSync() reads the local queue and
+  // exits immediately once it's empty.
+  const intervalId = setInterval(() => void runSync(userId), 60_000);
+
+  return () => {
+    netSubscription();
+    appStateSubscription.remove();
+    clearInterval(intervalId);
+  };
 }
