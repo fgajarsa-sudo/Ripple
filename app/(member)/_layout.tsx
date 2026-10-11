@@ -14,9 +14,13 @@ export default function MemberLayout() {
   const { data: membership, isLoading: membershipLoading } = useMembership();
 
   useEffect(() => {
-    if (session?.user.id) {
-      void registerPushToken(session.user.id);
-    }
+    if (!session?.user.id) return;
+    // Delayed well past expo-updates' ~10s post-first-render error-recovery window: if this
+    // native call (APNs token registration) is ever the source of a fatal error, we want it
+    // to happen after content has already appeared, so a fresh install can't get bricked by
+    // error-recovery re-throwing it with nothing to roll back to. See lib/crashLog.ts.
+    const timer = setTimeout(() => void registerPushToken(session.user.id), 15000);
+    return () => clearTimeout(timer);
   }, [session?.user.id]);
 
   useEffect(() => {

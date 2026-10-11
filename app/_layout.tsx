@@ -3,23 +3,46 @@ import { Inter_400Regular, Inter_600SemiBold, useFonts as useInterFonts } from '
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { consumeFatalErrorLog } from '../lib/crashLog';
 import { asyncStoragePersister, queryClient } from '../lib/queryClient';
-// Sentry.wrap() + its native Session Replay "Unmask" view component disabled — a fresh-install
-// crash log (expo.controller.errorRecoveryQueue, an uncaught exception at launch) showed
-// RNSentryReplayUnmask* symbols in a live thread's register state, pointing at Sentry's native
-// component registration as the likely cause. Pulled out entirely rather than keep guessing
-// under time pressure — a working app now matters more than crash reporting. Revisit by
-// upgrading @sentry/react-native or explicitly disabling Session Replay once there's room to
-// debug this properly instead of under a deadline.
+// Sentry removed entirely (fresh-install crashes persisted even after removal — see
+// `lib/crashLog.ts` for the on-device capture that replaced it as the way to see a fatal
+// error that happens too early/natively for Sentry or a JS error boundary to catch).
 import { SessionProvider } from '../lib/SessionProvider';
 import { colors } from '../lib/theme';
 
 export default function RootLayout() {
   const [interLoaded] = useInterFonts({ Inter_400Regular, Inter_600SemiBold });
   const [frauncesLoaded] = useFrauncesFonts({ Fraunces_600SemiBold });
+  const [lastCrash, setLastCrash] = useState<string | null>(null);
+
+  useEffect(() => {
+    const crash = consumeFatalErrorLog();
+    if (crash) {
+      setLastCrash(crash);
+      Alert.alert('Previous launch crashed', crash.slice(0, 500));
+    }
+  }, []);
+
+  if (lastCrash) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.cream, paddingTop: 60, paddingHorizontal: 16 }}>
+        <Text style={{ fontWeight: '600', marginBottom: 12 }}>Previous launch crashed with:</Text>
+        <ScrollView style={{ flex: 1 }}>
+          <Text selectable style={{ fontFamily: 'Courier', fontSize: 12 }}>
+            {lastCrash}
+          </Text>
+        </ScrollView>
+        <Pressable onPress={() => setLastCrash(null)} style={{ paddingVertical: 16 }}>
+          <Text style={{ color: colors.teal, fontWeight: '600' }}>Continue to app</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (!interLoaded || !frauncesLoaded) {
     return (
