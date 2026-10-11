@@ -115,7 +115,7 @@ export default function Home() {
           </View>
         )}
 
-        <PillButton title="Submit a Reading" onPress={() => router.push('/(member)/submit/location')} />
+        <PillButton title="Submit a Reading" onPress={onSubmitReading} />
 
         {(membership?.role === 'admin' || membership?.role === 'reviewer') && (
           <View style={styles.reviewButtonSpacing}>

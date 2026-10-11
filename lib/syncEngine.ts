@@ -1,4 +1,5 @@
 import NetInfo from '@react-native-community/netinfo';
+import { File } from 'expo-file-system';
 import * as Notifications from 'expo-notifications';
 import { AppState, type AppStateStatus } from 'react-native';
 
@@ -13,12 +14,16 @@ import { supabase } from './supabase';
 let isSyncing = false;
 
 async function uploadPhoto(orgId: string, photoLocalUri: string): Promise<string> {
-  const response = await fetch(photoLocalUri);
-  const blob = await response.blob();
+  // Real crash found via a device crash log: calling fetch() on a local file:// URI to read
+  // it back off disk (rather than making an actual network request) crashed inside Expo's
+  // native fetch module while validating HTTP headers that a local-file "request" has no real
+  // business going through in the first place. File directly implements Blob and can read its
+  // own bytes without touching the network stack at all, which is what we actually want here.
+  const arrayBuffer = await new File(photoLocalUri).arrayBuffer();
   const path = `${orgId}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
   const { error } = await supabase.storage
     .from('submission-photos')
-    .upload(path, blob, { contentType: 'image/jpeg' });
+    .upload(path, arrayBuffer, { contentType: 'image/jpeg' });
   if (error) throw error;
   return path;
 }
