@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react-native';
 import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
@@ -12,6 +13,7 @@ import { SENSOR_PARAMETERS } from '../../lib/readings';
 import { colors, fonts } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useSession } from '../../lib/SessionProvider';
+import { useMemberships } from '../../lib/useMemberships';
 
 function csvEscape(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -24,10 +26,15 @@ function csvEscape(value: unknown): string {
 
 export default function SettingsScreen() {
   const { session } = useSession();
+  const queryClient = useQueryClient();
+  const { data: memberships } = useMemberships();
   const [isExporting, setIsExporting] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isStartingPersonal, setIsStartingPersonal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const personalMembership = memberships?.find((m) => m.organizations?.is_personal);
 
   const onExport = async () => {
     setErrorMessage(null);
@@ -112,6 +119,23 @@ export default function SettingsScreen() {
     router.replace('/(auth)/join-group');
   };
 
+  const onManagePersonalCollection = async () => {
+    if (personalMembership) {
+      router.push({ pathname: '/(admin)', params: { orgId: personalMembership.org_id } });
+      return;
+    }
+    setErrorMessage(null);
+    setIsStartingPersonal(true);
+    const { data: personalOrgId, error } = await supabase.rpc('start_personal_collection');
+    setIsStartingPersonal(false);
+    if (error) {
+      setErrorMessage(error.message);
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ['memberships'] });
+    router.push({ pathname: '/(admin)/thresholds', params: { orgId: personalOrgId as string } });
+  };
+
   const onDeleteAccount = () => {
     Alert.alert(
       'Delete your account?',
@@ -175,11 +199,25 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>INDEPENDENT COLLECTION</Text>
+          <Text style={styles.hint}>
+            {personalMembership
+              ? "You're also tracking readings on your own, independent of your group. Manage its thresholds and settings here."
+              : "Track readings on your own, in addition to your group — this doesn't affect your group membership. You'll be able to set your own thresholds for it."}
+          </Text>
+          <PillButton
+            title={personalMembership ? 'Manage my independent collection' : 'Start an independent collection'}
+            variant="secondary"
+            onPress={onManagePersonalCollection}
+            loading={isStartingPersonal}
+          />
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>GROUP</Text>
           <Text style={styles.hint}>
-            Want to join a different group, start your own, or collect independently instead? Leave your
-            current group first — this keeps your account and your past readings, it just takes you back to
-            the start screen.
+            Want to join a different group, or start a new one instead? Leave your current group first — this
+            keeps your account and your past readings, it just takes you back to the start screen.
           </Text>
           <PillButton title="Leave group" variant="secondary" onPress={onLeaveGroup} loading={isLeaving} />
         </View>
