@@ -438,6 +438,49 @@ begin
   );
 end $$;
 
+-- ----------------------------------------------------------------------------
+-- Independent Observers can coexist with a real group (migration 009, launch spec scope
+-- decision: not full multi-group, but a real group + Independent Observers together).
+-- member_a's current real group by this point is whatever they created in the create_own_org
+-- block above (that block already moved them out of org_a), so look that up directly rather
+-- than assuming org_a — join Independent Observers and confirm BOTH stay active, then confirm
+-- leave_current_org() only drops the real one.
+-- ----------------------------------------------------------------------------
+do $$
+declare
+  v_member_a uuid;
+  v_current_real_org uuid;
+  v_io_org_id uuid;
+begin
+  select member_a into v_member_a from test_fixture_ids;
+  select id into v_io_org_id from organizations where slug = 'independent-observers';
+
+  -- The previous block ends authenticated as member_b (its last sub-check) — that context
+  -- persists across statements until reset, so switch back to member_a before reading
+  -- member_a's own rows, not just before calling the RPC.
+  perform tests.authenticate_as(v_member_a);
+
+  select org_id into v_current_real_org from memberships
+    where user_id = v_member_a and status = 'active' and org_id <> v_io_org_id;
+
+  perform join_independent_observers();
+
+  insert into tap_output (line) select ok(
+    v_current_real_org is not null
+    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_current_real_org and status = 'active')
+    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_io_org_id and status = 'active'),
+    'joining Independent Observers does not give up an existing real group'
+  );
+
+  perform leave_current_org();
+
+  insert into tap_output (line) select ok(
+    not exists(select 1 from memberships where user_id = v_member_a and org_id = v_current_real_org and status = 'active')
+    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_io_org_id and status = 'active'),
+    'leave_current_org() drops only the real group, leaving Independent Observers active'
+  );
+end $$;
+
 select tests.clear_authentication();
 insert into tap_output (line) select * from finish();
 select line from tap_output order by id;

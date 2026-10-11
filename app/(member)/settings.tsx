@@ -25,6 +25,7 @@ function csvEscape(value: unknown): string {
 export default function SettingsScreen() {
   const { session } = useSession();
   const [isExporting, setIsExporting] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -88,6 +89,29 @@ export default function SettingsScreen() {
     }
   };
 
+  const onLeaveGroup = () => {
+    Alert.alert(
+      'Leave your current group?',
+      "You'll be taken back to the start screen, where you can join a different group, start a new one, or collect independently. Your past readings stay with this group.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Leave Group', style: 'destructive', onPress: performLeaveGroup },
+      ]
+    );
+  };
+
+  const performLeaveGroup = async () => {
+    setErrorMessage(null);
+    setIsLeaving(true);
+    const { error } = await supabase.rpc('leave_current_org');
+    setIsLeaving(false);
+    if (error) {
+      setErrorMessage(error.message);
+      return;
+    }
+    router.replace('/(auth)/join-group');
+  };
+
   const onDeleteAccount = () => {
     Alert.alert(
       'Delete your account?',
@@ -148,6 +172,16 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>MY DATA</Text>
           <Text style={styles.hint}>Download a CSV of every reading you've personally submitted.</Text>
           <PillButton title="Export my data" variant="secondary" onPress={onExport} loading={isExporting} />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>GROUP</Text>
+          <Text style={styles.hint}>
+            Want to join a different group, start your own, or collect independently instead? Leave your
+            current group first — this keeps your account and your past readings, it just takes you back to
+            the start screen.
+          </Text>
+          <PillButton title="Leave group" variant="secondary" onPress={onLeaveGroup} loading={isLeaving} />
         </View>
 
         <View style={styles.section}>

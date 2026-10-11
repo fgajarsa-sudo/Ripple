@@ -131,17 +131,24 @@ export default function JoinGroup() {
         </Pressable>
       </View>
 
-      <View style={styles.tabRow}>
-        <Pressable style={[styles.tab, path === 'start' && styles.tabActive]} onPress={() => setPath('start')}>
-          <Text style={[styles.tabText, path === 'start' && styles.tabTextActive]}>Start a group</Text>
-        </Pressable>
-        <Pressable style={[styles.tab, path === 'join' && styles.tabActive]} onPress={() => setPath('join')}>
-          <Text style={[styles.tabText, path === 'join' && styles.tabTextActive]}>Join a group</Text>
-        </Pressable>
-        <Pressable style={[styles.tab, path === 'solo' && styles.tabActive]} onPress={() => setPath('solo')}>
-          <Text style={[styles.tabText, path === 'solo' && styles.tabTextActive]}>Collect on my own</Text>
-        </Pressable>
-      </View>
+      {/* Hidden once a group has actually been created: every path here calls
+          leave_current_org() first, so staying reachable after success would let someone tap
+          into "Collect on my own" or "Join a group" and silently abandon the group they just
+          made — exactly what happened in testing (created a group, switched tabs, lost admin
+          access to it with no warning). */}
+      {!createdInvite && (
+        <View style={styles.tabRow}>
+          <Pressable style={[styles.tab, path === 'start' && styles.tabActive]} onPress={() => setPath('start')}>
+            <Text style={[styles.tabText, path === 'start' && styles.tabTextActive]}>Start a group</Text>
+          </Pressable>
+          <Pressable style={[styles.tab, path === 'join' && styles.tabActive]} onPress={() => setPath('join')}>
+            <Text style={[styles.tabText, path === 'join' && styles.tabTextActive]}>Join a group</Text>
+          </Pressable>
+          <Pressable style={[styles.tab, path === 'solo' && styles.tabActive]} onPress={() => setPath('solo')}>
+            <Text style={[styles.tabText, path === 'solo' && styles.tabTextActive]}>Collect on my own</Text>
+          </Pressable>
+        </View>
+      )}
 
       {path === 'start' &&
         (createdInvite ? (
