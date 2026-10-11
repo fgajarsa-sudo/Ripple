@@ -411,73 +411,81 @@ begin
 end $$;
 
 -- ----------------------------------------------------------------------------
--- join_independent_observers (launch spec Task 1, "collect on my own"). Exercises the real
--- seeded org from migration 008, not a fixture — this org must already exist in the linked
--- database for this test to pass, which is itself a useful integration check.
+-- start_personal_collection (launch spec Task 1, "collect on my own" — migration 010).
+-- Replaces the old shared-org join_independent_observers flow: each user gets their own
+-- personal org, as admin, so their thresholds are genuinely theirs rather than shared with
+-- every other solo collector.
 -- ----------------------------------------------------------------------------
 do $$
 declare
   v_member_b uuid;
-  v_joined_org_id uuid;
-  v_io_org_id uuid;
+  v_personal_org_id uuid;
+  v_personal_org_id_2 uuid;
 begin
   select member_b into v_member_b from test_fixture_ids;
 
   perform tests.authenticate_as(v_member_b);
-  v_joined_org_id := join_independent_observers();
-
-  select id into v_io_org_id from organizations where slug = 'independent-observers';
+  v_personal_org_id := start_personal_collection();
 
   insert into tap_output (line) select ok(
-    v_io_org_id is not null and v_joined_org_id = v_io_org_id,
-    'join_independent_observers joins the seeded Independent Observers org'
+    v_personal_org_id is not null
+    and exists(
+      select 1 from organizations where id = v_personal_org_id and is_personal
+    ),
+    'start_personal_collection creates a dedicated org marked is_personal'
   );
   insert into tap_output (line) select ok(
-    exists(select 1 from memberships where user_id = v_member_b and org_id = v_io_org_id and role = 'member' and status = 'active'),
-    'join_independent_observers makes the caller a member, not admin'
+    exists(select 1 from memberships where user_id = v_member_b and org_id = v_personal_org_id and role = 'admin' and status = 'active'),
+    'start_personal_collection makes the caller admin of their own personal org'
+  );
+
+  -- Calling it again should reuse the same org, not create a second one.
+  v_personal_org_id_2 := start_personal_collection();
+  insert into tap_output (line) select ok(
+    v_personal_org_id_2 = v_personal_org_id,
+    'start_personal_collection reuses an existing personal org rather than duplicating it'
   );
 end $$;
 
 -- ----------------------------------------------------------------------------
--- Independent Observers can coexist with a real group (migration 009, launch spec scope
--- decision: not full multi-group, but a real group + Independent Observers together).
+-- A personal collection can coexist with a real group (migration 009/010, launch spec scope
+-- decision: not full multi-group, but a real group + one personal collection together), and
+-- each stays independently admin-able — the actual feature request this was built for
+-- ("thresholds need to be real for both, they could be two independent test areas").
 -- member_a's current real group by this point is whatever they created in the create_own_org
 -- block above (that block already moved them out of org_a), so look that up directly rather
--- than assuming org_a — join Independent Observers and confirm BOTH stay active, then confirm
--- leave_current_org() only drops the real one.
+-- than assuming org_a.
 -- ----------------------------------------------------------------------------
 do $$
 declare
   v_member_a uuid;
   v_current_real_org uuid;
-  v_io_org_id uuid;
+  v_personal_org_id uuid;
 begin
   select member_a into v_member_a from test_fixture_ids;
-  select id into v_io_org_id from organizations where slug = 'independent-observers';
 
-  -- The previous block ends authenticated as member_b (its last sub-check) — that context
-  -- persists across statements until reset, so switch back to member_a before reading
-  -- member_a's own rows, not just before calling the RPC.
+  -- The previous block ends authenticated as member_b — that context persists across
+  -- statements until reset, so switch back to member_a before reading member_a's own rows.
   perform tests.authenticate_as(v_member_a);
 
   select org_id into v_current_real_org from memberships
-    where user_id = v_member_a and status = 'active' and org_id <> v_io_org_id;
+    where user_id = v_member_a and status = 'active' and org_id not in (select id from organizations where is_personal);
 
-  perform join_independent_observers();
+  v_personal_org_id := start_personal_collection();
 
   insert into tap_output (line) select ok(
     v_current_real_org is not null
-    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_current_real_org and status = 'active')
-    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_io_org_id and status = 'active'),
-    'joining Independent Observers does not give up an existing real group'
+    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_current_real_org and status = 'active' and role = 'admin')
+    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_personal_org_id and status = 'active' and role = 'admin'),
+    'starting a personal collection does not give up an existing real group, and both remain admin-able'
   );
 
   perform leave_current_org();
 
   insert into tap_output (line) select ok(
     not exists(select 1 from memberships where user_id = v_member_a and org_id = v_current_real_org and status = 'active')
-    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_io_org_id and status = 'active'),
-    'leave_current_org() drops only the real group, leaving Independent Observers active'
+    and exists(select 1 from memberships where user_id = v_member_a and org_id = v_personal_org_id and status = 'active'),
+    'leave_current_org() drops only the real group, leaving the personal collection active'
   );
 end $$;
 

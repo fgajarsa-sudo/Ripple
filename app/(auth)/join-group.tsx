@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
@@ -28,6 +29,7 @@ async function redeemInvite(code: string) {
 }
 
 export default function JoinGroup() {
+  const queryClient = useQueryClient();
   const [path, setPath] = useState<Path>('join');
   const [joinMode, setJoinMode] = useState<'code' | 'directory'>('code');
   const [code, setCode] = useState('');
@@ -73,6 +75,11 @@ export default function JoinGroup() {
       setErrorMessage(error.message);
       return;
     }
+    // useMembership()'s cached result is still the pre-join "no membership" value — without
+    // invalidating it, (member)/_layout.tsx and (admin)/_layout.tsx both read the stale
+    // cache on the very next render and redirect straight back here, even though a real
+    // membership now exists.
+    await queryClient.invalidateQueries({ queryKey: ['membership'] });
     router.replace('/');
   };
 
@@ -85,6 +92,7 @@ export default function JoinGroup() {
       setErrorMessage(error.message);
       return;
     }
+    await queryClient.invalidateQueries({ queryKey: ['membership'] });
     router.replace('/');
   };
 
@@ -104,19 +112,25 @@ export default function JoinGroup() {
       return;
     }
     const row = data as { org_id: string; invite_code: string };
+    await queryClient.invalidateQueries({ queryKey: ['membership'] });
     setCreatedInvite({ orgId: row.org_id, code: row.invite_code });
   };
 
   const onCollectSolo = async () => {
     setErrorMessage(null);
     setIsSubmitting(true);
-    const { error } = await supabase.rpc('join_independent_observers');
+    // Each user gets their own personal org (migration 010), not membership in one org
+    // shared by every solo collector — otherwise everyone's thresholds would be the same
+    // set of numbers, which defeats the point of having thresholds at all for a genuinely
+    // different collection area.
+    const { data: personalOrgId, error } = await supabase.rpc('start_personal_collection');
     setIsSubmitting(false);
     if (error) {
       setErrorMessage(error.message);
       return;
     }
-    router.replace('/');
+    await queryClient.invalidateQueries({ queryKey: ['membership'] });
+    router.replace({ pathname: '/(admin)/thresholds', params: { orgId: personalOrgId as string } });
   };
 
   return (
@@ -158,7 +172,15 @@ export default function JoinGroup() {
               <QRCode value={createdInvite.code} size={120} color={colors.navy} backgroundColor={colors.card} />
               <Text style={styles.inviteCode}>{createdInvite.code}</Text>
             </View>
-            <PillButton title="Continue" onPress={() => router.replace('/')} />
+            {/* Straight to thresholds, not Home — a brand-new group's thresholds are still
+                just the seeded defaults (migration 001), and setting real baselines for the
+                group's own lake is the natural next step for whoever just created it. */}
+            <PillButton
+              title="Set baseline thresholds"
+              onPress={() =>
+                router.replace({ pathname: '/(admin)/thresholds', params: { orgId: createdInvite.orgId } })
+              }
+            />
           </View>
         ) : (
           <View style={styles.section}>

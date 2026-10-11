@@ -7,16 +7,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../components/AppHeader';
 import { PillButton, ScreenTitle } from '../../components/ui';
+import { useAdminOrg } from '../../lib/AdminOrgContext';
 import { colors, fonts } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
-import { useMembership } from '../../lib/useMembership';
 
 export default function ExportScreen() {
-  const { data: membership } = useMembership();
+  const { orgId } = useAdminOrg();
   const [isExporting, setIsExporting] = useState(false);
 
   const onExport = async () => {
-    if (!membership?.org_id) return;
     setIsExporting(true);
     try {
       const {
@@ -24,7 +23,7 @@ export default function ExportScreen() {
       } = await supabase.auth.getSession();
       if (!session) throw new Error('Not signed in');
 
-      const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/export-org-data?org_id=${membership.org_id}`;
+      const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/export-org-data?org_id=${orgId}`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });

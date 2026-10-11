@@ -32,6 +32,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from('notifications')
         .select('id, title, body, sent_at')
+        .eq('org_id', membership!.org_id)
         .order('sent_at', { ascending: false })
         .limit(10);
       if (error) throw error;

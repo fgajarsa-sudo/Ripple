@@ -6,9 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../components/AppHeader';
 import { Input, PillButton, ScreenTitle } from '../../components/ui';
+import { useAdminOrg } from '../../lib/AdminOrgContext';
 import { colors, fonts, radius } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
-import { useMembership } from '../../lib/useMembership';
 
 type Site = { id: string; name: string; lat: number; lng: number; radius_m: number; is_active: boolean };
 
@@ -101,7 +101,7 @@ function SiteRow({ site, onChanged }: { site: Site; onChanged: () => void }) {
 }
 
 export default function SitesScreen() {
-  const { data: membership } = useMembership();
+  const { orgId } = useAdminOrg();
   const queryClient = useQueryClient();
   const [newName, setNewName] = useState('');
   const [newLat, setNewLat] = useState('');
@@ -110,29 +110,29 @@ export default function SitesScreen() {
   const [isAdding, setIsAdding] = useState(false);
 
   const { data: sites } = useQuery({
-    queryKey: ['sites-admin', membership?.org_id],
+    queryKey: ['sites-admin', orgId],
     queryFn: async (): Promise<Site[]> => {
       const { data, error } = await supabase
         .from('sites')
         .select('id, name, lat, lng, radius_m, is_active')
+        .eq('org_id', orgId)
         .order('name');
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!membership?.org_id,
   });
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['sites-admin'] });
 
   const onAdd = async () => {
-    if (!membership?.org_id || !newName.trim() || !newLat || !newLng) {
+    if (!newName.trim() || !newLat || !newLng) {
       Alert.alert('Missing info', 'Name, latitude, and longitude are required.');
       return;
     }
     setIsAdding(true);
     try {
       const { error } = await supabase.from('sites').insert({
-        org_id: membership.org_id,
+        org_id: orgId,
         name: newName.trim(),
         lat: Number(newLat),
         lng: Number(newLng),

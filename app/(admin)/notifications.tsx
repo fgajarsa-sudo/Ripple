@@ -6,9 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../components/AppHeader';
 import { Input, PillButton, ScreenTitle } from '../../components/ui';
+import { useAdminOrg } from '../../lib/AdminOrgContext';
 import { colors, fonts, radius } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
-import { useMembership } from '../../lib/useMembership';
 
 type Site = { id: string; name: string };
 type Target = 'all' | 'active_30d' | 'site';
@@ -48,7 +48,7 @@ async function previewRecipientCount(orgId: string, target: Target, siteId: stri
 }
 
 export default function NotificationComposerScreen() {
-  const { data: membership } = useMembership();
+  const { orgId } = useAdminOrg();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [target, setTarget] = useState<Target>('all');
@@ -57,26 +57,24 @@ export default function NotificationComposerScreen() {
   const [isSending, setIsSending] = useState(false);
 
   const { data: sites } = useQuery({
-    queryKey: ['sites-for-notify', membership?.org_id],
+    queryKey: ['sites-for-notify', orgId],
     queryFn: async (): Promise<Site[]> => {
-      const { data, error } = await supabase.from('sites').select('id, name').eq('is_active', true);
+      const { data, error } = await supabase.from('sites').select('id, name').eq('org_id', orgId).eq('is_active', true);
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!membership?.org_id,
   });
 
   useEffect(() => {
-    if (!membership?.org_id) return;
     if (target === 'site' && !siteId) {
       setRecipientCount(null);
       return;
     }
-    previewRecipientCount(membership.org_id, target, siteId).then(setRecipientCount);
-  }, [membership?.org_id, target, siteId]);
+    previewRecipientCount(orgId, target, siteId).then(setRecipientCount);
+  }, [orgId, target, siteId]);
 
   const onSend = async () => {
-    if (!membership?.org_id || !title.trim() || !body.trim()) {
+    if (!title.trim() || !body.trim()) {
       Alert.alert('Missing info', 'Title and body are required.');
       return;
     }
@@ -87,7 +85,7 @@ export default function NotificationComposerScreen() {
     setIsSending(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-notification', {
-        body: { org_id: membership.org_id, title: title.trim(), body: body.trim(), target, target_site_id: siteId },
+        body: { org_id: orgId, title: title.trim(), body: body.trim(), target, target_site_id: siteId },
       });
       if (error) throw error;
       Alert.alert('Sent', `Delivered to ${data?.recipientCount ?? 0} recipient(s).`);

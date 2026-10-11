@@ -7,9 +7,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '../../components/AppHeader';
 import { Input, PillButton, ScreenTitle } from '../../components/ui';
 import { colors, fonts } from '../../lib/theme';
+import { useAdminOrg } from '../../lib/AdminOrgContext';
 import { roundToParameterPrecision, SENSOR_PARAMETERS, type SensorParameterKey } from '../../lib/readings';
 import { supabase } from '../../lib/supabase';
-import { useMembership } from '../../lib/useMembership';
 
 type ThresholdRow = {
   parameter: SensorParameterKey;
@@ -37,23 +37,22 @@ function toDraft(rows: ThresholdRow[]): DraftState {
 }
 
 export default function ThresholdsScreen() {
-  const { data: membership } = useMembership();
+  const { orgId, orgName } = useAdminOrg();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<DraftState>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   const { data: thresholds, isLoading } = useQuery({
-    queryKey: ['thresholds-admin', membership?.org_id],
+    queryKey: ['thresholds-admin', orgId],
     queryFn: async (): Promise<ThresholdRow[]> => {
       const { data, error } = await supabase
         .from('thresholds')
         .select('parameter, min_value, max_value, severity')
-        .eq('org_id', membership!.org_id);
+        .eq('org_id', orgId);
       if (error) throw error;
       return data as ThresholdRow[];
     },
-    enabled: !!membership?.org_id,
   });
 
   useEffect(() => {
@@ -71,14 +70,13 @@ export default function ThresholdsScreen() {
   };
 
   const onSave = async () => {
-    if (!membership?.org_id) return;
     setIsSaving(true);
     try {
       const rows = SENSOR_PARAMETERS.flatMap((param) =>
         (['medium', 'high'] as const).map((severity) => {
           const entry = draft[param.key]?.[severity] ?? { min: '', max: '' };
           return {
-            org_id: membership.org_id,
+            org_id: orgId,
             parameter: param.key,
             severity,
             min_value: entry.min === '' ? null : roundToParameterPrecision(param.key, Number(entry.min)),
@@ -100,10 +98,9 @@ export default function ThresholdsScreen() {
   };
 
   const onReset = async () => {
-    if (!membership?.org_id) return;
     setIsResetting(true);
     try {
-      const { error } = await supabase.rpc('reset_org_thresholds', { target_org_id: membership.org_id });
+      const { error } = await supabase.rpc('reset_org_thresholds', { target_org_id: orgId });
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ['thresholds-admin'] });
     } catch (err) {
@@ -127,6 +124,7 @@ export default function ThresholdsScreen() {
           <Text style={styles.backLink}>← Admin menu</Text>
         </Pressable>
         <ScreenTitle>Thresholds</ScreenTitle>
+        <Text style={styles.orgName}>{orgName}</Text>
         <Text style={styles.hint}>
           Values outside these ranges drive automatic urgency scoring. Changes only apply to future
           submissions — past readings are never rescored.
@@ -184,6 +182,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 24 },
   homeLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
   backLink: { fontSize: 14, color: colors.teal, marginTop: 8, marginBottom: 4, fontFamily: fonts.body },
+  orgName: { fontSize: 14, color: colors.teal, fontFamily: fonts.bodySemiBold, marginTop: 2 },
   hint: { fontSize: 13, color: colors.mutedForeground, fontFamily: fonts.body, marginTop: 6, marginBottom: 16 },
   list: { gap: 16, paddingBottom: 16 },
   card: { borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 14, backgroundColor: colors.card, gap: 8 },

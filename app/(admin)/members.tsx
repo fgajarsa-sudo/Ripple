@@ -7,9 +7,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../components/AppHeader';
 import { PillButton, ScreenTitle } from '../../components/ui';
+import { useAdminOrg } from '../../lib/AdminOrgContext';
 import { colors, fonts, radius } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
-import { useMembership } from '../../lib/useMembership';
 
 type MemberRow = {
   id: string;
@@ -29,37 +29,35 @@ type InviteRow = {
 const ROLES: MemberRow['role'][] = ['member', 'reviewer', 'admin'];
 
 export default function MembersScreen() {
-  const { data: membership } = useMembership();
+  const { orgId } = useAdminOrg();
   const queryClient = useQueryClient();
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
 
   const { data: members } = useQuery({
-    queryKey: ['members-admin', membership?.org_id],
+    queryKey: ['members-admin', orgId],
     queryFn: async (): Promise<MemberRow[]> => {
       const { data, error } = await supabase
         .from('memberships')
         .select('id, user_id, role, profiles(display_name)')
-        .eq('org_id', membership!.org_id)
+        .eq('org_id', orgId)
         .eq('status', 'active')
         .order('role');
       if (error) throw error;
       return data as unknown as MemberRow[];
     },
-    enabled: !!membership?.org_id,
   });
 
   const { data: invites } = useQuery({
-    queryKey: ['invites-admin', membership?.org_id],
+    queryKey: ['invites-admin', orgId],
     queryFn: async (): Promise<InviteRow[]> => {
       const { data, error } = await supabase
         .from('org_invites')
         .select('id, code, use_count, max_uses, expires_at')
-        .eq('org_id', membership!.org_id)
+        .eq('org_id', orgId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!membership?.org_id,
   });
 
   const refetchMembers = () => queryClient.invalidateQueries({ queryKey: ['members-admin'] });
@@ -87,10 +85,9 @@ export default function MembersScreen() {
   };
 
   const onCreateInvite = async () => {
-    if (!membership?.org_id) return;
     setIsCreatingInvite(true);
     try {
-      const { error } = await supabase.rpc('admin_create_invite', { target_org_id: membership.org_id });
+      const { error } = await supabase.rpc('admin_create_invite', { target_org_id: orgId });
       if (error) throw error;
       refetchInvites();
     } catch (err) {

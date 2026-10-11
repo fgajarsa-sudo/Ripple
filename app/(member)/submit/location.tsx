@@ -30,6 +30,7 @@ export default function LocationStep() {
       const { data, error } = await supabase
         .from('sites')
         .select('id, name, lat, lng, radius_m')
+        .eq('org_id', membership!.org_id)
         .eq('is_active', true);
       if (error) throw error;
       return data ?? [];
