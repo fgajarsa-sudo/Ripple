@@ -10,17 +10,33 @@ import { listQueuedSubmissions, type QueuedSubmission } from '../../lib/offlineQ
 import { colors, fonts, radius } from '../../lib/theme';
 import { supabase } from '../../lib/supabase';
 import { useSession } from '../../lib/SessionProvider';
+import { useMemberships } from '../../lib/useMemberships';
 
 type SubmissionRow = {
   id: string;
   captured_at: string;
   readings: Record<string, number>;
   ai_urgency: 'low' | 'medium' | 'high' | null;
+  organizations: { name: string } | null;
 };
 
 type HistoryItem =
-  | { source: 'server'; capturedAt: string; readingCount: number; urgency: SubmissionRow['ai_urgency']; key: string }
-  | { source: 'local'; capturedAt: string; readingCount: number; status: QueuedSubmission['status']; key: string };
+  | {
+      source: 'server';
+      capturedAt: string;
+      readingCount: number;
+      urgency: SubmissionRow['ai_urgency'];
+      orgName: string | null;
+      key: string;
+    }
+  | {
+      source: 'local';
+      capturedAt: string;
+      readingCount: number;
+      status: QueuedSubmission['status'];
+      orgName: string | null;
+      key: string;
+    };
 
 const QUEUE_STATUS_LABEL: Record<QueuedSubmission['status'], string> = {
   pending: 'Queued — will upload when back in coverage',
@@ -30,16 +46,22 @@ const QUEUE_STATUS_LABEL: Record<QueuedSubmission['status'], string> = {
 
 export default function History() {
   const { session } = useSession();
+  const { data: memberships } = useMemberships();
+  // Queued (not-yet-synced) items only carry an org id, not a name — look it up from the
+  // user's current memberships rather than a second query.
+  const orgNameById = new Map((memberships ?? []).map((m) => [m.org_id, m.organizations?.name ?? null]));
 
   const { data: submissions, refetch: refetchSubmissions } = useQuery({
     queryKey: ['my-submissions', session?.user.id],
     queryFn: async (): Promise<SubmissionRow[]> => {
+      // Deliberately not scoped to one org — "My History" spans every org the user has ever
+      // submitted to, including a real group and a personal collection at once.
       const { data, error } = await supabase
         .from('submissions')
-        .select('id, captured_at, readings, ai_urgency')
+        .select('id, captured_at, readings, ai_urgency, organizations(name)')
         .order('captured_at', { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return data as unknown as SubmissionRow[];
     },
     enabled: !!session?.user.id,
   });
@@ -67,6 +89,7 @@ export default function History() {
       capturedAt: s.captured_at,
       readingCount: Object.keys(s.readings ?? {}).length,
       urgency: s.ai_urgency,
+      orgName: s.organizations?.name ?? null,
       key: s.id,
     }));
     const localItems: HistoryItem[] = (queued ?? []).map((q) => ({
@@ -74,12 +97,17 @@ export default function History() {
       capturedAt: q.capturedAt,
       readingCount: Object.keys(q.readings ?? {}).length,
       status: q.status,
+      orgName: orgNameById.get(q.orgId) ?? null,
       key: q.syncClientId,
     }));
     return [...localItems, ...serverItems].sort(
       (a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime()
     );
-  }, [submissions, queued]);
+  }, [submissions, queued, orgNameById]);
+
+  // Only worth showing per-row once there's more than one org to tell apart — avoids clutter
+  // for the common case of a single group.
+  const showOrgName = (memberships?.length ?? 0) > 1;
 
   return (
     <View style={styles.root}>
@@ -98,6 +126,7 @@ export default function History() {
                 <Text style={styles.rowMeta}>
                   {item.readingCount} reading{item.readingCount === 1 ? '' : 's'} ·{' '}
                   {item.source === 'server' ? 'Synced' : QUEUE_STATUS_LABEL[item.status]}
+                  {showOrgName && item.orgName ? ` · ${item.orgName}` : ''}
                 </Text>
               </View>
               {item.source === 'server' && item.urgency && <UrgencyBadge urgency={item.urgency} />}

@@ -3,6 +3,9 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import type { SensorReadings } from './readings';
 
 export type SubmitDraft = {
+  orgId: string | null; // which of the user's active orgs this submission is for — set once
+  // at the start of the flow (Home), before location/photo/data steps begin.
+  orgName: string | null;
   lat: number | null;
   lng: number | null;
   siteId: string | null;
@@ -16,6 +19,8 @@ export type SubmitDraft = {
 
 function emptyDraft(): SubmitDraft {
   return {
+    orgId: null,
+    orgName: null,
     lat: null,
     lng: null,
     siteId: null,

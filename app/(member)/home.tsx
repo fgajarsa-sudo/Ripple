@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../components/AppHeader';
@@ -10,20 +10,51 @@ import { countQueuedSubmissions } from '../../lib/offlineQueue';
 import { colors, fonts, radius } from '../../lib/theme';
 import { clearPushToken } from '../../lib/registerPushToken';
 import { useSession } from '../../lib/SessionProvider';
+import { useSubmitDraft } from '../../lib/SubmitDraftContext';
 import { supabase } from '../../lib/supabase';
 import { useMembership } from '../../lib/useMembership';
+import { useMemberships } from '../../lib/useMemberships';
 
 type Notification = { id: string; title: string; body: string; sent_at: string };
 
 export default function Home() {
   const { session } = useSession();
   const { data: membership } = useMembership();
+  const { data: memberships } = useMemberships();
+  const { updateDraft } = useSubmitDraft();
 
   const onSignOut = async () => {
     if (session?.user.id) {
       await clearPushToken(session.user.id);
     }
     await supabase.auth.signOut();
+  };
+
+  // Most users only ever have one active org, so this stays a single tap exactly as before.
+  // A user with both a real group and a personal collection gets asked which this reading is
+  // for — review.tsx and the offline queue both key off draft.orgId now, not the "primary"
+  // membership, which only ever submitted to whichever org useMembership() happened to prefer.
+  const onSubmitReading = () => {
+    const all = memberships ?? [];
+    if (all.length <= 1) {
+      const only = all[0] ?? membership;
+      if (!only) return;
+      updateDraft({ orgId: only.org_id, orgName: only.organizations?.name ?? null });
+      router.push('/(member)/submit/location');
+      return;
+    }
+
+    Alert.alert(
+      'Submit a reading for...',
+      undefined,
+      all.map((m) => ({
+        text: m.organizations?.name ?? 'Unnamed group',
+        onPress: () => {
+          updateDraft({ orgId: m.org_id, orgName: m.organizations?.name ?? null });
+          router.push('/(member)/submit/location');
+        },
+      }))
+    );
   };
 
   const { data: notifications } = useQuery({

@@ -12,7 +12,6 @@ import { colors, fonts, radius } from '../../../lib/theme';
 import { distanceMeters } from '../../../lib/geo';
 import { supabase } from '../../../lib/supabase';
 import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
-import { useMembership } from '../../../lib/useMembership';
 
 const WEATHER_OPTIONS = ['Clear', 'Partly Cloudy', 'Overcast', 'Raining', 'Stormy', 'Foggy'];
 
@@ -20,22 +19,24 @@ type Site = { id: string; name: string; lat: number; lng: number; radius_m: numb
 
 export default function LocationStep() {
   const { draft, updateDraft, resetDraft } = useSubmitDraft();
-  const { data: membership } = useMembership();
   const [locating, setLocating] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
 
+  // draft.orgId is set once, on Home, before this screen ever loads — not the "primary"
+  // membership, since a user with both a real group and a personal collection needs sites
+  // (and everything downstream) scoped to whichever one they're actually submitting for.
   const { data: sites } = useQuery({
-    queryKey: ['sites', membership?.org_id],
+    queryKey: ['sites', draft.orgId],
     queryFn: async (): Promise<Site[]> => {
       const { data, error } = await supabase
         .from('sites')
         .select('id, name, lat, lng, radius_m')
-        .eq('org_id', membership!.org_id)
+        .eq('org_id', draft.orgId!)
         .eq('is_active', true);
       if (error) throw error;
       return data ?? [];
     },
-    enabled: !!membership?.org_id,
+    enabled: !!draft.orgId,
   });
 
   useEffect(() => {
@@ -104,6 +105,7 @@ export default function LocationStep() {
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>Where are you?</ScreenTitle>
+        {draft.orgName && <Text style={styles.submittingFor}>Submitting for {draft.orgName}</Text>}
 
         {locating ? (
           <ActivityIndicator style={styles.locatingIndicator} color={colors.teal} />
@@ -218,6 +220,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   cancelLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
   content: { padding: 24, gap: 16 },
+  submittingFor: { fontSize: 13, color: colors.teal, fontFamily: fonts.bodySemiBold, marginTop: -8 },
   locatingIndicator: { marginTop: 24 },
   locationCard: { gap: 10 },
   locationLabel: { fontSize: 12, fontFamily: fonts.bodySemiBold, color: colors.mutedForeground, letterSpacing: 0.5 },

@@ -12,26 +12,26 @@ import { useSession } from '../../../lib/SessionProvider';
 import { supabase } from '../../../lib/supabase';
 import { runSync } from '../../../lib/syncEngine';
 import { useSubmitDraft } from '../../../lib/SubmitDraftContext';
-import { useMembership } from '../../../lib/useMembership';
 
 export default function ReviewStep() {
   const { draft, resetDraft } = useSubmitDraft();
   const { session } = useSession();
-  const { data: membership } = useMembership();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const readingEntries = SENSOR_PARAMETERS.filter((p) => draft.readings[p.key] !== undefined);
 
   const onSubmit = async () => {
-    if (!membership?.org_id || !session?.user.id) return;
+    if (!draft.orgId || !session?.user.id) return;
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
       // Always queues locally first, then attempts an immediate sync — offline-first per
       // spec §10, but with no perceptible difference from a direct submit when online,
       // since runSync() resolves before we check whether the item is still queued.
-      const syncClientId = await enqueueSubmission(draft, membership.org_id, session.user.id);
+      // draft.orgId (set on Home, before this flow started) is which of the user's orgs this
+      // reading is actually for — not necessarily their "primary" membership.
+      const syncClientId = await enqueueSubmission(draft, draft.orgId, session.user.id);
       await runSync(session.user.id);
 
       const stillQueued = await listQueuedSubmissions(session.user.id);
@@ -74,6 +74,7 @@ export default function ReviewStep() {
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>Review & submit</ScreenTitle>
+        {draft.orgName && <Text style={styles.submittingFor}>Submitting for {draft.orgName}</Text>}
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -142,6 +143,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   cancelLink: { fontSize: 14, color: colors.cream, opacity: 0.8, fontFamily: fonts.body },
   content: { padding: 24, gap: 20 },
+  submittingFor: { fontSize: 13, color: colors.teal, fontFamily: fonts.bodySemiBold, marginTop: -12 },
   section: { gap: 6, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 16 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 12, fontFamily: fonts.bodySemiBold, color: colors.mutedForeground, letterSpacing: 0.5 },
