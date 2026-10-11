@@ -63,6 +63,26 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Cross-tenant check: resolveTargetUserIds' 'site' branch queries site_subscriptions with
+  // no org filter at all, so without this, any org admin could pass another org's site_id
+  // and have this function look up and notify that other org's subscribers. Using the
+  // caller's own RLS-scoped client here means sites_select's org scoping (migration 001)
+  // enforces this the same way it would for any direct client query, not a bespoke check
+  // that could drift out of sync with the real policy.
+  if (target === 'site') {
+    const { data: site } = await userClient
+      .from('sites')
+      .select('id')
+      .eq('id', targetSiteId as string)
+      .eq('org_id', orgId)
+      .maybeSingle();
+    if (!site) {
+      return new Response(JSON.stringify({ error: 'target_site_id does not belong to this org' }), {
+        status: 400,
+      });
+    }
+  }
+
   const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
   const userIds = await resolveTargetUserIds(adminClient, orgId, target, targetSiteId);

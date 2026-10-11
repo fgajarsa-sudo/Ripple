@@ -337,6 +337,42 @@ insert into tap_output (line) select is_empty(
 );
 
 -- ----------------------------------------------------------------------------
+-- site_subscriptions ("my sites"): scoped by user_id rather than org_id directly, but the
+-- insert policy (migration 001) already blocks subscribing to a site outside the caller's
+-- current org, so no row can exist that would let one org's member see another org's
+-- subscriber. This test covers that insert-time guard, which is the actual enforcement
+-- point — this table had no dedicated test before this audit (launch spec Task 2).
+-- ----------------------------------------------------------------------------
+select tests.authenticate_as((select member_a from test_fixture_ids));
+
+do $$
+declare
+  v_member_a uuid;
+  v_site_a uuid;
+  v_site_b uuid;
+begin
+  select member_a, site_a, site_b into v_member_a, v_site_a, v_site_b from test_fixture_ids;
+
+  begin
+    insert into site_subscriptions (user_id, site_id) values (v_member_a, v_site_b);
+    insert into tap_output (line) select ok(false, 'org A member cannot subscribe to org B site');
+  exception when others then
+    insert into tap_output (line) select ok(true, 'org A member cannot subscribe to org B site');
+  end;
+
+  insert into tap_output (line) select ok(
+    (select count(*) from site_subscriptions where user_id = v_member_a and site_id = v_site_b) = 0,
+    'the rejected cross-org subscription attempt left no row behind'
+  );
+
+  insert into site_subscriptions (user_id, site_id) values (v_member_a, v_site_a);
+  insert into tap_output (line) select ok(
+    exists(select 1 from site_subscriptions where user_id = v_member_a and site_id = v_site_a),
+    'org A member can subscribe to their own org''s site'
+  );
+end $$;
+
+-- ----------------------------------------------------------------------------
 -- create_own_org (launch spec Task 1, "start a group") + leave_current_org switching
 -- semantics. No temp tables needed here — assertions run inside the same do block, with
 -- an in-block role switch to member B to check the new org's isolation, since
