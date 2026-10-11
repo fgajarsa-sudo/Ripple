@@ -336,6 +336,72 @@ insert into tap_output (line) select is_empty(
   'org A admin cannot see org B member profile'
 );
 
+-- ----------------------------------------------------------------------------
+-- create_own_org (launch spec Task 1, "start a group") + leave_current_org switching
+-- semantics. No temp tables needed here — assertions run inside the same do block, with
+-- an in-block role switch to member B to check the new org's isolation, since
+-- SECURITY DEFINER functions resolve auth.uid() off the JWT-claim GUCs tests.authenticate_as
+-- sets, not the literal Postgres role.
+-- ----------------------------------------------------------------------------
+select tests.authenticate_as((select member_a from test_fixture_ids));
+
+do $$
+declare
+  v_member_a uuid;
+  v_member_b uuid;
+  v_org_a uuid;
+  v_new_org_id uuid;
+  v_new_code text;
+begin
+  select member_a, member_b, org_a into v_member_a, v_member_b, v_org_a from test_fixture_ids;
+
+  select org_id, invite_code into v_new_org_id, v_new_code from create_own_org('Member A''s New Group');
+
+  insert into tap_output (line) select ok(
+    exists(select 1 from memberships where user_id = v_member_a and org_id = v_new_org_id and role = 'admin' and status = 'active'),
+    'create_own_org makes the caller admin of the new org'
+  );
+  insert into tap_output (line) select ok(
+    not exists(select 1 from memberships where user_id = v_member_a and org_id = v_org_a and status = 'active'),
+    'create_own_org deactivates the caller''s prior membership (org switching)'
+  );
+  insert into tap_output (line) select ok(v_new_code is not null, 'create_own_org returns a usable invite code');
+
+  perform tests.authenticate_as(v_member_b);
+  insert into tap_output (line) select ok(
+    not exists(select 1 from organizations where id = v_new_org_id),
+    'org B member cannot see the newly self-created org (unlisted by default)'
+  );
+end $$;
+
+-- ----------------------------------------------------------------------------
+-- join_independent_observers (launch spec Task 1, "collect on my own"). Exercises the real
+-- seeded org from migration 008, not a fixture — this org must already exist in the linked
+-- database for this test to pass, which is itself a useful integration check.
+-- ----------------------------------------------------------------------------
+do $$
+declare
+  v_member_b uuid;
+  v_joined_org_id uuid;
+  v_io_org_id uuid;
+begin
+  select member_b into v_member_b from test_fixture_ids;
+
+  perform tests.authenticate_as(v_member_b);
+  v_joined_org_id := join_independent_observers();
+
+  select id into v_io_org_id from organizations where slug = 'independent-observers';
+
+  insert into tap_output (line) select ok(
+    v_io_org_id is not null and v_joined_org_id = v_io_org_id,
+    'join_independent_observers joins the seeded Independent Observers org'
+  );
+  insert into tap_output (line) select ok(
+    exists(select 1 from memberships where user_id = v_member_b and org_id = v_io_org_id and role = 'member' and status = 'active'),
+    'join_independent_observers makes the caller a member, not admin'
+  );
+end $$;
+
 select tests.clear_authentication();
 insert into tap_output (line) select * from finish();
 select line from tap_output order by id;
