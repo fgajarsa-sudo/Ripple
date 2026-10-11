@@ -62,7 +62,6 @@
       "expo-font",
       "expo-sharing",
       "expo-sqlite",
-      "@sentry/react-native",
       "expo-status-bar"
     ],
     "extra": {
