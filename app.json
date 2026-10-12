@@ -4,6 +4,7 @@
     "slug": "ripple",
     "version": "1.0.0",
     "scheme": "ripple",
+    "jsEngine": "jsc",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
