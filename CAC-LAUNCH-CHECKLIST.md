@@ -26,8 +26,8 @@ the live database or `master`.
 > fine, then merge `origin/cac-launch-prep` into master. Then, following the CAC launch spec:
 > (1) enable GitHub Pages for
 > this repo from the `master` branch `/docs` folder and give me the /privacy and /support URLs;
-> (3) walk me through scripts/cac-task3-cleanup.sql step by step — show me STEP 1 output before
-> running anything destructive; (4) then do spec Task 6.
+> (2) walk me through scripts/cac-task3-cleanup.sql step by step — show me STEP 1 output before
+> running anything destructive; (3) then do spec Task 6.
 
 ## Device walkthrough (Task 4) — on the TestFlight build
 
