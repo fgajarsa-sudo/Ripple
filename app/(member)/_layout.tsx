@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { registerPushToken } from '../../lib/registerPushToken';
 import { useSession } from '../../lib/SessionProvider';
+import { SubmitDraftProvider } from '../../lib/SubmitDraftContext';
 import { startSyncListeners } from '../../lib/syncEngine';
 import { colors, fonts } from '../../lib/theme';
 import { useMembership } from '../../lib/useMembership';
@@ -29,7 +30,14 @@ export default function MemberLayout() {
 
   if (sessionLoading || (session && membershipLoading)) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cream }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.cream,
+        }}
+      >
         <ActivityIndicator color={colors.teal} />
       </View>
     );
@@ -41,26 +49,43 @@ export default function MemberLayout() {
     return <Redirect href="/(auth)/join-group" />;
   }
 
+  // SubmitDraftProvider wraps the whole signed-in area, not just submit/: Home sets
+  // draft.orgId (group vs independent collection) *before* the submit flow starts, so the
+  // draft must exist above Home. When it only lived in submit/_layout.tsx, Home's
+  // useSubmitDraft() threw on every render -> fatal JS error at launch/sign-in -> native
+  // SIGABRT via expo-updates' error recovery. Keep exactly one provider (don't re-add one in
+  // submit/_layout.tsx, or it would shadow this one and drop the org Home chose).
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.teal,
-        tabBarInactiveTintColor: colors.mutedForeground,
-        tabBarLabelStyle: { fontFamily: fonts.body, fontSize: 11 },
-        tabBarStyle: { backgroundColor: colors.card, borderTopColor: colors.border },
-      }}
-    >
-      <Tabs.Screen
-        name="home"
-        options={{ title: 'Home', tabBarIcon: ({ color, size }) => <House color={color} size={size} /> }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{ title: 'My History', tabBarIcon: ({ color, size }) => <History color={color} size={size} /> }}
-      />
-      <Tabs.Screen name="submit" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
-    </Tabs>
+    <SubmitDraftProvider>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: colors.teal,
+          tabBarInactiveTintColor: colors.mutedForeground,
+          tabBarLabelStyle: { fontFamily: fonts.body, fontSize: 11 },
+          tabBarStyle: {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+          },
+        }}
+      >
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, size }) => <House color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+          name="history"
+          options={{
+            title: 'My History',
+            tabBarIcon: ({ color, size }) => <History color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen name="submit" options={{ href: null }} />
+        <Tabs.Screen name="settings" options={{ href: null }} />
+      </Tabs>
+    </SubmitDraftProvider>
   );
 }
