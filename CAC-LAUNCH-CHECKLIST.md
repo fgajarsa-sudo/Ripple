@@ -22,8 +22,30 @@ the live database or `master`.
 
 ## Laptop session — paste this into Claude Code
 
-See the final paste in the session of 2026-10-12 04:15 (iOS App Store only for judges; no
-TestFlight link anywhere in the CAC form).
+> Run `git fetch origin` and merge `origin/android-map-fallback` into master. It hides the map on Android (no Google Maps key exists) and adds install steps to the support page. Run `npm run typecheck && npm test` and stop if either fails.
+>
+> Then follow the CAC launch spec and CAC-LAUNCH-CHECKLIST.md, in this exact order:
+>
+> 1. **Privacy + support pages:** enable GitHub Pages for this repo from the `master` branch, `/docs` folder. Confirm both pages load and give me the /privacy and /support URLs.
+>
+> 2. **Data cleanup:** walk me through `scripts/cac-task3-cleanup.sql` one step at a time. Show me the STEP 1 output and wait for my OK before running anything that deletes data. Then create the Ripple Demo account with email fgajarsa+rippledemo@gmail.com (I'll type the password myself) and run its setup step.
+>
+> 3. **Builds:** start the iOS production build and the Android APK build from the same commit. While they run, tell me exactly which screenshots to take on my phone and what sizes App Store Connect needs.
+>
+> 4. **App Store:** upload the iOS build to App Store Connect, fill in the listing, the privacy questionnaire (per the spec), and the App Review notes with the Ripple Demo login and invite code, then submit for review. Do not create or share any TestFlight public link.
+>
+> 5. **Freeze:** tag the submitted commit `cac-2026-submission`, create a GitHub Release from that tag, and attach the APK to it.
+>
+> 6. **Report:** give me, in one message, every link for the CAC form:
+>    - App Store link (and its review status)
+>    - Android download link from the GitHub Release
+>    - Privacy and support page URLs
+>    - GitHub link: https://github.com/fgajarsa-sudo/Ripple/tree/cac-2026-submission
+>    - Ripple Demo login email and invite code
+>
+>    Do not include any TestFlight link.
+>
+> Do not start any surf work. After the tag, master is frozen.
 
 ## Device walkthrough (Task 4) — on the TestFlight build
 
