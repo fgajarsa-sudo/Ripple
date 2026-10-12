@@ -22,14 +22,8 @@ the live database or `master`.
 
 ## Laptop session — paste this into Claude Code
 
-> git fetch origin. The launch-crash fix and cac-launch-prep are already in master. Merge
-> `origin/android-map-fallback` into master (hides the Google map on Android, where no Maps key
-> is configured; iOS keeps the map) and run typecheck + tests. Then, following the CAC launch
-> spec: (1) enable GitHub Pages for this repo from the `master` branch `/docs` folder and give me
-> the /privacy and /support URLs; (2) walk me through scripts/cac-task3-cleanup.sql step by step
-> — show me STEP 1 output before running anything destructive; (3) do spec Task 6 (iOS App Store
-> submission + TestFlight, Android APK on the GitHub Release, freeze tag); (4) give me every link
-> for the CAC form in one message.
+See the final paste in the session of 2026-10-12 04:15 (iOS App Store only for judges; no
+TestFlight link anywhere in the CAC form).
 
 ## Device walkthrough (Task 4) — on the TestFlight build
 
