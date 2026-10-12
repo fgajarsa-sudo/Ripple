@@ -11,13 +11,12 @@ the live database or `master`.
 | 2. Org isolation audit | Done — 31/31 cross-tenant tests |
 | 3. Test data cleanup + Ripple Demo | **Script drafted, NOT run:** `scripts/cac-task3-cleanup.sql` |
 | 4. Store-required features | Account deletion, 13+ attestation, version 1.0.0, exact permission copy, no background location — all verified in code. **Left:** screenshots + device walkthrough |
-| 5. Privacy + support pages | **Pages drafted** in `docs/` (`docs/privacy/`, `docs/support/`). **Left:** fill `[ADMIN NAME]`, turn on GitHub Pages |
+| 5. Privacy + support pages | **Pages drafted** in `docs/` (`docs/privacy/`, `docs/support/`). **Left:** turn on GitHub Pages |
 | 6. Builds, submit, freeze tag | Not started — needs the laptop (Expo + Apple sign-ins) |
 
 ## Admin to-do (decisions only the admin can make)
 
-1. Confirm the operator name for the privacy policy (replaces `[ADMIN NAME]`) and that
-   `fgajarsa@gmail.com` is the right support email.
+1. (Done) Operator: "a student-led group"; support email confirmed: fgajarsa@gmail.com.
 2. Read STEP 1 output of `scripts/cac-task3-cleanup.sql`, confirm the four org names to keep.
 3. Pick the Ripple Demo email + password (goes into App Review Notes).
 
@@ -25,7 +24,7 @@ the live database or `master`.
 
 > git fetch origin. Confirm the TestFlight build from `fix-launch-crash-submit-draft` launched
 > fine, then merge `origin/cac-launch-prep` into master. Then, following the CAC launch spec:
-> (1) replace `[ADMIN NAME]` in docs/privacy/index.md with "<NAME>"; (2) enable GitHub Pages for
+> (1) enable GitHub Pages for
 > this repo from the `master` branch `/docs` folder and give me the /privacy and /support URLs;
 > (3) walk me through scripts/cac-task3-cleanup.sql step by step — show me STEP 1 output before
 > running anything destructive; (4) then do spec Task 6.

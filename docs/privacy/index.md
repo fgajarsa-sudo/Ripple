@@ -6,7 +6,7 @@ title: Ripple Privacy Policy
 
 **Effective date:** October 11, 2026
 
-Ripple is operated by [ADMIN NAME], a student developer. This policy explains what information Ripple collects, how it is used, and the choices you have.
+Ripple is operated by a student-led group. This policy explains what information Ripple collects, how it is used, and the choices you have.
 
 ## Information we collect
 
