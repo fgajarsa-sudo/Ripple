@@ -22,12 +22,14 @@ the live database or `master`.
 
 ## Laptop session — paste this into Claude Code
 
-> git fetch origin. Confirm the TestFlight build from `fix-launch-crash-submit-draft` launched
-> fine, then merge `origin/cac-launch-prep` into master. Then, following the CAC launch spec:
-> (1) enable GitHub Pages for
-> this repo from the `master` branch `/docs` folder and give me the /privacy and /support URLs;
-> (2) walk me through scripts/cac-task3-cleanup.sql step by step — show me STEP 1 output before
-> running anything destructive; (3) then do spec Task 6.
+> git fetch origin. The launch-crash fix and cac-launch-prep are already in master. Merge
+> `origin/android-map-fallback` into master (hides the Google map on Android, where no Maps key
+> is configured; iOS keeps the map) and run typecheck + tests. Then, following the CAC launch
+> spec: (1) enable GitHub Pages for this repo from the `master` branch `/docs` folder and give me
+> the /privacy and /support URLs; (2) walk me through scripts/cac-task3-cleanup.sql step by step
+> — show me STEP 1 output before running anything destructive; (3) do spec Task 6 (iOS App Store
+> submission + TestFlight, Android APK on the GitHub Release, freeze tag); (4) give me every link
+> for the CAC form in one message.
 
 ## Device walkthrough (Task 4) — on the TestFlight build
 
@@ -40,6 +42,7 @@ the live database or `master`.
 - [ ] My History labels each reading with the right collection
 - [ ] Set different thresholds for group vs personal; a reading is scored against the right one
 - [ ] Settings → Export my data works; Delete my account works
+- [ ] Android (borrow any Android phone, ~5 min): install the APK, sign in, submit one reading — location screen shows GPS + lat/lng fields, no map, no crash
 - [ ] Airplane mode: submit → shows "queued" → turn signal back on → it syncs
 - [ ] Screenshots for the listing: Home, submit flow, History
 

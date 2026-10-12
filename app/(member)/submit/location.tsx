@@ -3,7 +3,15 @@ import * as Location from 'expo-location';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, type MapPressEvent } from 'react-native-maps';
+import MapView, { Marker, type MapPressEvent } from 'react-native-maps';
+
+// The map is iOS-only for the CAC launch. On Android, react-native-maps renders Google Maps,
+// which needs android.config.googleMaps.apiKey in app.json - not configured yet (requires the
+// org's own Google Cloud billing). Without a key the Android map is blank at best and can
+// crash the screen at worst, and every reading goes through this screen. Android users get
+// the lat/lng fields + GPS fix + site chips, exactly as in the pre-map beta. To enable the map
+// on Android later: add the key to app.json, rebuild, then flip this to `true`.
+const SHOW_MAP = Platform.OS === 'ios';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '../../../components/AppHeader';
@@ -131,11 +139,10 @@ export default function LocationStep() {
                 onChangeText={(t) => updateDraft({ lng: t ? Number(t) : null, siteId: null, siteName: null })}
               />
             </View>
-            {draft.lat !== null && draft.lng !== null && (
+            {SHOW_MAP && draft.lat !== null && draft.lng !== null && (
               <>
                 <Text style={styles.mapHint}>Tap or drag the pin to fine-tune — sometimes typing coordinates isn't the easiest way.</Text>
                 <MapView
-                  provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
                   style={styles.map}
                   region={{
                     latitude: draft.lat,
