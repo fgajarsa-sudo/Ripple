@@ -18,7 +18,7 @@ the live database or `master`.
 
 1. (Done) Operator: "a student-led group"; support email confirmed: fgajarsa@gmail.com.
 2. Read STEP 1 output of `scripts/cac-task3-cleanup.sql`, confirm the four org names to keep.
-3. Pick the Ripple Demo email + password (goes into App Review Notes).
+3. Ripple Demo email confirmed: `fgajarsa+rippledemo@gmail.com`. Admin picks the password at the laptop (never written into the repo).
 
 ## Laptop session — paste this into Claude Code
 

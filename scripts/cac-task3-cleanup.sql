@@ -85,7 +85,7 @@ rollback;   -- <- change to COMMIT only after the output above looks right
 -- ============================================================================
 -- STEP 4 — Ripple Demo login (after STEP 2 is committed)
 -- a) Dashboard -> Authentication -> Users -> Add user -> "Create new user"
---    email: a demo address you control, e.g. ripple.demo+review@<your domain or gmail>
+--    email: fgajarsa+rippledemo@gmail.com (confirmed by admin)
 --    password: something you'll paste into App Review Notes. Tick "Auto confirm user".
 -- b) Run this, with the demo email filled in. It makes the demo user admin of Ripple Demo
 --    and adds one site + 4 plausible sample readings so the reviewer sees a lived-in app.
@@ -94,7 +94,7 @@ rollback;   -- <- change to COMMIT only after the output above looks right
 -- ============================================================================
 -- do $$
 -- declare
---   demo_email text := 'PUT-DEMO-EMAIL-HERE';
+--   demo_email text := 'fgajarsa+rippledemo@gmail.com';
 --   demo_user uuid;
 --   demo_org uuid;
 --   demo_site uuid;
